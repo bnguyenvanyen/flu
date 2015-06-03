@@ -1,0 +1,36 @@
+Name: FLU
+Version: 0.1
+Synopsis: UPCA deterministic and stochastic models for flu seasonality
+Authors: Benjamin Nguyen-Van-Yen <benjamin.nguyen-van-yen@ens.fr>
+License: LGPL with OCaml linking exception
+Description: For the simulation of any two-level biological process as 
+  a Markov process.
+
+OASISFormat: 0.4
+BuildTools: ocamlbuild
+Plugins: META (0.4), DevFiles (0.4)
+
+Library flu
+  Path: src
+  Modules: Gill, Dopri5, Sss, Ssd, Dss, Dsd
+  BuildDepends: csv, lacaml
+
+Executable flu_ssd
+  Path: src
+  MainIs: sim_ssd.ml
+  BuildDepends: flu, lacaml
+  CompiledObject: native
+
+Executable flu_sss
+  Path: src
+  MainIs: sim_sss.ml
+  BuildDepends: flu
+  CompiledObject: best
+
+Document API
+  Title:  API reference for Flu
+  Type: OCamlbuild
+  InstallDir: $docdir/api
+  BuildTools: ocamldoc, ocamlbuild
+  XOCamlbuildPath: .
+  XOCamlBuildLibraries: flu

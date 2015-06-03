@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: 5ed52399d06d86897a06fd4a1bc71342)
+version = "0.1"
+description = "UPCA deterministic and stochastic models for flu seasonality"
+requires = "csv lacaml"
+archive(byte) = "flu.cma"
+archive(byte, plugin) = "flu.cma"
+archive(native) = "flu.cmxa"
+archive(native, plugin) = "flu.cmxs"
+exists_if = "flu.cma"
+# OASIS_STOP
+
