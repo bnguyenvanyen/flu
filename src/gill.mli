@@ -1,3 +1,5 @@
+(** A simple implementation of the Gillespie algorithm, with csv output. *)
+
 (** The time variable is represented by floats *)
 type time = float
 
@@ -14,10 +16,11 @@ module type SYSTEM =
     (** list of rate functions of the process *)
     val fl : (time -> state -> float) list
     (** list of modification functions of the process.
-      * Should be compatible with fl *)
+        Should be compatible with fl *)
     val ml : (state -> state) list
   end
 
+(** Parameters controlling the algorithm *)
 module type ALGPARAMS =
   sig
     (** maximum time resolution wanted *)
@@ -40,9 +43,10 @@ module type INTEGR =
     (** csv representation of the process. Built from csv_init and csv_line *)
     val csv_of_proc : process -> string list list
     (** simulate the process.
-      * simulate fname tf x0 integrates the system from time 0 and state x0 to
-      * time tf, stores the result in the file designated by fname, 
-      * and returns the results *)
+
+        simulate fname tf x0 integrates the system from time 0 and state x0 to
+        time tf, stores the result in the file designated by fname, 
+        and returns the results. *)
     val simulate :
           string ->
           time ->

@@ -16,7 +16,7 @@ module type PARS =
     val contract_bound : float
   end;;
 
-module Sys (Pars:PARS) : Dopri5.SYSTEM =
+module Sys (Pars : PARS) : Dopri5.SYSTEM =
   struct
     open Pars
     let eta = etaN *. size;;
@@ -58,15 +58,19 @@ module Sys (Pars:PARS) : Dopri5.SYSTEM =
       let z = copy ~y:z ~ofsy:4 tmp2 in
       z
 
-    let norm_var y =
+    let norm1_var y =
       let dx = copy ~y:dx ~n:3 ~ofsx:4 y in
       amax dx
+
+    let norm2_var y =
+      let dx = copy ~y:dx ~n:3 ~ofsx:4 y in
+      sqrt (dot dx dx)
     
     (* FIXME breaks if two values are < 0 at once ... *)
     (* FIXME also, useless manipulations of y ... *)
     let check_in_domain y =
       if Vec.min y < 0. then false else 
-      if norm_var y > init_perturb *. dilat_bound then false else
+      if norm2_var y > init_perturb *. dilat_bound then false else
       true
 
     let shift_in_domain y ~z =   
@@ -81,8 +85,10 @@ module Sys (Pars:PARS) : Dopri5.SYSTEM =
           (y.{1} +. y.{3} /. 2., y.{2} +. y.{3} /. 2., 0.)
         else (y.{1}, y.{2}, y.{3})
       in let ampl =
-        let n = norm_var y in
+        let n = norm2_var y in
         if n > init_perturb *. dilat_bound then
+          n /. init_perturb
+        else if n < init_perturb /. contract_bound then
           n /. init_perturb
         else 
           1.

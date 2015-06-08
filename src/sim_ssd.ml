@@ -9,13 +9,11 @@ let g_r = ref (1. /. (14. *. 365.));;
 let nu_r = ref (1. /. 2.77);;
 
 (* variational system behaviour *)
-let init_perturb_r = ref (10. ** (~-. 6.));;
-let dilat_bound_r = ref 100.;;
-let contract_bound_r = ref 100.;;
+let init_perturb_r = ref (10. ** (~-. 5.));;
+let dilat_bound_r = ref 10.;;
 
 (* simulation arguments *)
-let dest_r = ref "./sim_ssd_default_dest.csv"
-let tf_r = ref (365. *. 10.);;
+let tf_r = ref (365. *. 100.);;
 
 let ds_0 = Random.float 2. -. 1.;;
 let di_0 = Random.float 2. -. 1.;;
@@ -30,20 +28,25 @@ let y0 = Vec.of_array
 let h0_r = ref (1. /. (24. *. 60.));;
 let delta_r = ref 0.1;;
 let min_step_r = ref (1. /. (24. *. 3600.));;
-let max_step_r = ref 7.;;
+let max_step_r = ref 1.;;
 
 let main () =
+  let change_chan_to_file co_r s =
+    co_r := open_out s
+  in
+  let chan_r = ref stdout in
   let specy0 = 
         [Arg.Float (fun x -> y0.{1} <- x);
          Arg.Float (fun x -> y0.{2} <- x);
          Arg.Float (fun x -> y0.{3} <- x);] in
   let specl = 
-        [("-dest", Arg.Set_string dest_r,
-                ": location of the destination CSV file");
+        [("-dest", Arg.String (change_chan_to_file chan_r),
+                ": location of the destination CSV file.\n" ^ 
+                "      If not given, outputs to standard output.");
          ("-tf", Arg.Set_float tf_r,
                 ": Simulate until (in days)");
          ("-y0", Arg.Tuple specy0,
-                ": Initial conditions (Should sum to 1)");
+                ": Initial conditions (Should sum to N)");
          ("-N", Arg.Set_float size_r, 
                 ": Total number of hosts in the population");
          ("-R0", Arg.Set_float r0_r, 
@@ -60,9 +63,6 @@ let main () =
                 ": Initial norm (1) of the perturbation");
          ("-dil", Arg.Set_float dilat_bound_r, 
                 ": Dilatation factor before rescaling the variational system");
-         ("-contr", Arg.Set_float contract_bound_r,
-                ": Contraction factor before rescaling the variational system");
-
          ("-h0", Arg.Set_float h0_r,
                 ": Initial step size");
          ("-delta", Arg.Set_float delta_r,
@@ -78,7 +78,8 @@ let main () =
   let usage_msg = "  Simulate using Dopri5(.ml) a single strain " ^
                   "seasonally forced SIR model approximating (for example) " ^
                   "influenza dynamics." ^
-                  "\nFor more info, look into ssd.mli and dopri5.mli" in
+                  "\nFor more info, look into ssd.mli and dopri5.mli.\n" ^
+                  "Available options :" in
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
@@ -96,7 +97,6 @@ let main () =
       let nu = !nu_r
       let init_perturb = !init_perturb_r
       let dilat_bound = !dilat_bound_r
-      let contract_bound = !contract_bound_r
     end
   in
   let module SsdSys = Ssd.Sys (Pars) in
@@ -109,6 +109,6 @@ let main () =
     end
   in
   let module Gen = Dopri5.Integrator (SsdSys) (Algp) in
-  Gen.simulate !dest_r !tf_r y0
+  Gen.simulate !chan_r !tf_r y0
 
 let () = ignore (main ())

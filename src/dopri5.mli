@@ -1,5 +1,5 @@
 (** Implementation of the Dormand-Prince integrator in Ocaml and BLAS, 
-  * with csv output *)
+    with csv output. *)
 
 (** ODE system description *)
 module type SYSTEM =
@@ -16,7 +16,7 @@ module type SYSTEM =
             Lacaml_float64.vec ->
             bool
     (** shift_in_domain y updates and returns y.
-      * Called if y is not in the domain, it should shift it back in. *)
+        Called if y is not in the domain, it should shift it back in. *)
     val shift_in_domain : 
             Lacaml_float64.vec ->
             z:Lacaml_float64.vec ->
@@ -73,18 +73,19 @@ module type INTEGR =
           (float * float * Lacaml_float64.vec)
    *)
     (** simulate the process.
-      * simulate fname tf h0 x0 integrates from time 0 to time tf, 
-      * with initial stepsize of h0 and initial conditions x0.
-      * The resulting time series is saved in the file designated by fname and
-      * the final state is returned *)
+
+        simulate chan tf h0 x0 integrates from time 0 to time tf, 
+        with initial stepsize of h0 and initial conditions x0 ;
+        the resulting time series is output to the channel designated by chan and
+        the final state is returned. *)
     val simulate : 
-          string ->
+          out_channel ->
           float -> 
           Lacaml_float64.vec -> 
           (float * Lacaml_float64.vec)
   end
 
 (** Functor building an integrator from an ODE system description and
-  * algorithmic parameters *)
+    algorithmic parameters *)
 module Integrator : functor (Sys : SYSTEM) -> 
                     functor (Algp : ALGPARAMS) -> INTEGR

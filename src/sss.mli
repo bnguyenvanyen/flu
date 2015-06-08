@@ -1,7 +1,7 @@
 (** Single strain stochastic simulation module *)
 
 (** Integration uses a very simple Gillespie algorithm.
-  * We assume that events happen much faster than the infectivity beta varies *)
+    We assume that events happen much faster than the infectivity beta varies *)
 
 (** Module for parameter values *)
 module type PARS =

@@ -63,7 +63,7 @@ module type INTEGR =
           (float * float * Lacaml_float64.vec)
    *)
     val simulate : 
-          string ->
+          out_channel ->
           float -> 
           Lacaml_float64.vec -> 
           (float * Lacaml_float64.vec)
@@ -175,9 +175,10 @@ module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) : INTEGR =
       done ;
       [string_of_float t; string_of_float h] @ (List.rev !state_string)
 
-    let simulate fname tf y0 =
-      (* saves the data as csv in fname (the file is cleared of existing data) *) 
-      let csv_data = ref [Sys.csv_init ()] in
+    let simulate st_chan tf y0 =
+      (* outputs the data as csv to chan *)
+      let chan = Csv.to_channel st_chan in
+      Csv.output_record chan (Sys.csv_init ()) ;
       let t = ref 0. in
       let h = ref Algp.h0 in
       let y4 = copy y0 in
@@ -188,9 +189,8 @@ module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) : INTEGR =
         let nt, nh, y = loop !t !h k y4 y5 y in
         t := nt;
         h := nh;
-        csv_data := (csv_line nt nh y) :: !csv_data
+        Csv.output_record chan (csv_line nt nh y)
       done;
-      Csv.save fname (List.rev !csv_data);
       (!t, y) 
   end;;
 
