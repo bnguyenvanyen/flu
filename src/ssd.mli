@@ -11,7 +11,6 @@ module type PARS =
     val nu : float
     val init_perturb : float
     val dilat_bound : float
-    val contract_bound : float
   end;;
 
 (** Functor initializing the module associated to parameter values *)

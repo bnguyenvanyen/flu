@@ -15,7 +15,6 @@ module type PARS =
     val q : float
     val init_perturb : float
     val dilat_bound : float
-    val contract_bound : float
   end;;
 
 module Sys (Pars : PARS) : Dopri5.SYSTEM =
@@ -125,39 +124,41 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
     (* FIXME breaks if two values are < 0 at once ... *)
     (* FIXME also, useless manipulations of y ... *)
     let check_in_domain y =
-      if Vec.min y < 0. then false else 
+      if Vec.min ~n:12 y < 0. then false else 
       if norm_var y > init_perturb *. dilat_bound then false else
       true
 
     let shift_in_domain y ~z =   
-      let s, i, r =
-        if y.{1} < 0. then 
-          (0., y.{2} +. y.{1} /. 2., y.{3} +. y.{1} /. 2.)
-        else 
-        if y.{2} < 0. then 
-          (y.{1} +. y.{2} /. 2., 0., y.{3} +. y.{2} /. 2.)
-        else 
-        if y.{3} < 0. then 
-          (y.{1} +. y.{3} /. 2., y.{2} +. y.{3} /. 2., 0.)
-        else (y.{1}, y.{2}, y.{3})
-      in let ampl =
+      for i = 1 to 12 do
+        if y.{i} < 0. then 
+          let a = y.{i} /. 11. in
+          for j = 1 to (i - 1) do
+            z.{j} <- y.{j} +. a
+          done;
+          for j = (i + 1) to 12 do
+            z.{j} <- y.{j} +. a
+          done;
+          z.{i} <- 0.
+      done; 
+      let ampl =
         let n = norm_var y in
         if n > init_perturb *. dilat_bound then
           n /. init_perturb
         else 
           1.
       in 
-      z.{1} <- s ;
-      z.{2} <- i ;
-      z.{3} <- r ;
-      z.{4} <- y.{4} /. ampl ;
-      z.{5} <- y.{5} /. ampl ;
-      z.{6} <- y.{6} /. ampl ;
+      for i = 13 to 24 do
+        z.{i} <- y.{i} /. ampl
+      done;
       z
-
     let csv_init () =
-      ["t" ; "h" ; "S" ; "I" ; "R"; "dS" ; "dI" ; "dR"]
-
+      ["t" ; "h" ; 
+       "R0" ; "R1" ; "R2" ; "R12" ;
+       "I10" ; "I20" ; "I12" ; "I21" ;
+       "Q0" ; "Q1" ; "Q2" ; "Q12" ;
+       "dR0" ; "dR1" ; "dR2" ; "dR12" ;
+       "dI10" ; "dI20" ; "dI12" ; "dI21" ;
+       "dQ0" ; "dQ1" ; "dQ2" ; "dQ12"]
   end
 
 

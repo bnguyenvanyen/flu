@@ -28,26 +28,26 @@ module Sys (Pars : PARS) : (Gill.SYSTEM with type state = int array) =
 
     let gi j = (* get i *)
       match j with
-      | 10 -> 5
-      | 20 -> 6
-      | 12 -> 7
-      | 21 -> 8
+      | 10 -> 4
+      | 20 -> 5
+      | 12 -> 6
+      | 21 -> 7
       | _ -> invalid_arg "expects 10, 20, 12 or 21"
     
     let gr j =
       match j with
-      | 0 -> 1
-      | 1 -> 2
-      | 2 -> 3
-      | 12 -> 4
+      | 0 -> 0
+      | 1 -> 1
+      | 2 -> 2
+      | 12 -> 3
       | _ -> invalid_arg "expects 0, 1, 2 or 12"
 
     let gq j =
       match j with
-      | 0 -> 9
-      | 1 -> 10
-      | 2 -> 11
-      | 12 -> 12
+      | 0 -> 8
+      | 1 -> 9
+      | 2 -> 10
+      | 12 -> 11
       | _ -> invalid_arg "expects 0, 1, 2, or 12"
 
     let fi1 st =

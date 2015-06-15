@@ -4,9 +4,12 @@ open Lacaml.D;;
 let size_r = ref (10. ** 5.);;
 let r0_r = ref (2.);;
 let e_r = ref (0.15);;
-let etaN_r = ref (10. ** (-7.1));;
-let g_r = ref (1. /. (14. *. 365.));;
-let nu_r = ref (1. /. 2.77);;
+let etaN1_r = ref (10. ** (-7.6));;
+let etaN2_r = ref (10. ** (-7.6));;
+let g1_r = ref (1. /. (20. *. 365.));;
+let g2_r = ref (1. /. (20. *. 365.));;
+let nu_r = ref (1. /. 2.77);; 
+let q_r = ref (2. /. 365.);; (* 6 months. Seasonal forcing ? *)
 
 (* variational system behaviour *)
 let init_perturb_r = ref (10. ** (~-. 8.));;
@@ -15,15 +18,19 @@ let dilat_bound_r = ref 10.;;
 (* simulation arguments *)
 let tf_r = ref (365. *. 200.);;
 
-let ds_0 = Random.float 2. -. 1.;;
-let di_0 = Random.float 2. -. 1.;;
-let dr_0 = ~-. ds_0 -. di_0;;
+let f = fun n -> Random.float 2. -. 1. 
+let dx_0 = Array.init 12 f 
+let s = Array.fold_left (+.) 0. dx_0 
+let dy_0 = Array.map (fun x -> (x -. s) *. !init_perturb_r) dx_0
 (* FIXME need to recompute y0 later (if size_r has been changed) *)
 let y0 = Vec.of_array 
-          [| 
-            0.5 *. !size_r ; 0.001 *. !size_r ; 0.499 *. !size_r ;
-            ds_0 *. !init_perturb_r ; di_0 *. !init_perturb_r ; dr_0 *. !init_perturb_r
-          |];;
+           (Array.append 
+            (Array.map (fun x -> x *. !size_r) 
+             [| 0.2 ; 0.2 ; 0.2 ; 0.2 ;
+                0.001 ; 0.001 ; 0.001 ; 0.001 ;
+                0.049 ; 0.049 ; 0.049 ; 0.049 |])
+            dy_0);;
+  
 
 (* Algorithm parameters *)
 let h0_r = ref (1. /. (24. *. 60.));;
@@ -39,7 +46,16 @@ let main () =
   let specy0 = 
         [Arg.Float (fun x -> y0.{1} <- x);
          Arg.Float (fun x -> y0.{2} <- x);
-         Arg.Float (fun x -> y0.{3} <- x);] in
+         Arg.Float (fun x -> y0.{3} <- x);
+         Arg.Float (fun x -> y0.{4} <- x);
+         Arg.Float (fun x -> y0.{5} <- x);
+         Arg.Float (fun x -> y0.{6} <- x);
+         Arg.Float (fun x -> y0.{7} <- x);
+         Arg.Float (fun x -> y0.{8} <- x);
+         Arg.Float (fun x -> y0.{9} <- x);
+         Arg.Float (fun x -> y0.{10} <- x);
+         Arg.Float (fun x -> y0.{11} <- x);
+         Arg.Float (fun x -> y0.{12} <- x);] in
   let specl = 
         [("-dest", Arg.String (change_chan_to_file chan_r),
                 ": location of the destination CSV file.\n" ^ 
@@ -54,12 +70,18 @@ let main () =
                 ": Basic reproductive ratio");
          ("-e", Arg.Set_float e_r, 
                 ": Strength of the seasonal forcing");
-         ("-etaN", Arg.Set_float etaN_r, 
-                ": Intensity of immigration (per host)");
-         ("-g", Arg.Set_float g_r, 
-                ": Frequency of immunity loss (1/days)");
+         ("-etaN1", Arg.Set_float etaN1_r, 
+                ": Intensity of immigration for strain 1 (per host)");
+         ("-etaN2", Arg.Set_float etaN2_r, 
+                ": Intensity of immigration for strain 2 (per host)");
+         ("-g1", Arg.Set_float g1_r, 
+                ": Frequency of immunity loss for strain 1 (1/days)");
+         ("-g2", Arg.Set_float g2_r, 
+                ": Frequency of immunity loss for strain 2 (1/days)");
          ("-nu", Arg.Set_float nu_r, 
                 ": Frequency of recovery from infection (1/days)");
+         ("-q", Arg.Set_float q_r, 
+                ": Frequency of loss of cross immunity (1/days)");
          ("-init_perturb", Arg.Set_float init_perturb_r,
                 ": Initial norm (1) of the perturbation");
          ("-dil", Arg.Set_float dilat_bound_r, 
@@ -76,15 +98,15 @@ let main () =
   (* simply ignore anonymous arguments *)
   let anon_print s = print_endline ("Ignored anonymous argument : " ^ s) in
   (* printed before the help message : *)
-  let usage_msg = "  Simulate using Dopri5(.ml) a single strain " ^
+  let usage_msg = "  Simulate using Dopri5(.ml) a double strain " ^
                   "seasonally forced SIR model approximating (for example) " ^
                   "influenza dynamics." ^
-                  "\nFor more info, look into ssd.mli and dopri5.mli.\n" ^
+                  "\nFor more info, look into dsd.mli and dopri5.mli.\n" ^
                   "Available options :" in
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  let init_sz = y0.{1} +. y0.{2} +. y0.{3} in
+  let init_sz = Vec.sum ~n:12 y0 in
   if not (init_sz = !size_r) then
     failwith ("The announced population size is not equal to the initial population size : \n" 
               ^ (string_of_float !size_r) ^ " != " ^ (string_of_float init_sz));
@@ -93,14 +115,17 @@ let main () =
       let size = !size_r
       let r0 = !r0_r
       let e = !e_r
-      let etaN = !etaN_r
-      let g = !g_r
+      let etaN1 = !etaN1_r
+      let etaN2 = !etaN2_r
+      let g1 = !g1_r
+      let g2 = !g2_r
       let nu = !nu_r
+      let q = !q_r
       let init_perturb = !init_perturb_r
       let dilat_bound = !dilat_bound_r
     end
   in
-  let module SsdSys = Ssd.Sys (Pars) in
+  let module DsdSys = Dsd.Sys (Pars) in
   let module Algp =
     struct
       let h0 = !h0_r
@@ -109,7 +134,7 @@ let main () =
       let max_step = !max_step_r
     end
   in
-  let module Gen = Dopri5.Integrator (SsdSys) (Algp) in
+  let module Gen = Dopri5.Integrator (DsdSys) (Algp) in
   Gen.simulate !chan_r !tf_r y0
 
 let () = ignore (main ())

@@ -27,6 +27,18 @@ Executable flu_sss
   BuildDepends: flu
   CompiledObject: best
 
+Executable flu_dsd
+  Path: src
+  MainIs: sim_dsd.ml
+  BuildDepends: flu, lacaml
+  CompiledObject: native
+
+Executable flu_dss
+  Path: src
+  MainIs: sim_dss.ml
+  BuildDepends: flu
+  CompiledObject: best
+
 Document API
   Title:  API reference for Flu
   Type: OCamlbuild

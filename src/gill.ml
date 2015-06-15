@@ -40,10 +40,10 @@ module type INTEGR =
     val forward : process -> process
     val csv_of_proc : process -> string list list
     val simulate :
-          string ->
+          out_channel ->
           float ->
           state ->
-          process
+          (time * state)
   end;;
 
 module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) : 
@@ -136,13 +136,15 @@ module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) :
             present = proc.present ;
             future = (nnt, nnst) :: tl}
 
-    let simulate fname tf x0 =
+    let simulate st_chan tf x0 =
+      let chan = Csv.to_channel st_chan in
+      Csv.output_record chan (Sys.csv_init ());
       let prst = (0., x0) in
       let proc0 = {past = []; present = prst; future = []} in
       let full_proc = to_the_end tf proc0 in
       let csv_data = csv_of_proc full_proc in
-      Csv.save fname csv_data ;
-      full_proc
+      Csv.output_all chan csv_data ;
+      full_proc.present
 
           
 

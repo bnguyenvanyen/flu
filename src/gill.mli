@@ -48,10 +48,10 @@ module type INTEGR =
         time tf, stores the result in the file designated by fname, 
         and returns the results. *)
     val simulate :
-          string ->
+          out_channel ->
           time ->
           state ->
-          process
+          time * state
   end
 
 (** functor to create integrators from system descriptions *)
