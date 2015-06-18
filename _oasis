@@ -12,7 +12,7 @@ Plugins: META (0.4), DevFiles (0.4)
 
 Library flu
   Path: src
-  Modules: Gill, Dopri5, Sss, Ssd, Dss, Dsd
+  Modules: Gill, Dopri5, Euler_multinomial, Sss, Ssd, Assd, Dss, Dsd
   BuildDepends: csv, lacaml
 
 Executable flu_ssd
@@ -24,6 +24,18 @@ Executable flu_ssd
 Executable flu_sss
   Path: src
   MainIs: sim_sss.ml
+  BuildDepends: flu
+  CompiledObject: best
+
+Executable flu_assd
+  Path: src
+  MainIs: sim_assd.ml
+  BuildDepends: flu
+  CompiledObject: native
+
+Executable flu_em_sss
+  Path: src
+  MainIs: sim_em_sss.ml
   BuildDepends: flu
   CompiledObject: best
 
