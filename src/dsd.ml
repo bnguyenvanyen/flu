@@ -19,7 +19,19 @@ module type PARS =
 
 module Sys (Pars : PARS) : Dopri5.SYSTEM =
   struct
-    open Pars
+    open Pars;;
+
+    assert (size >= 0. 
+            && r0 >= 0. 
+            && e >= 0. 
+            && etaN1 >= 0. 
+            && etaN2 >= 0. 
+            && g1 >= 0. 
+            && g2 >= 0. 
+            && nu >= 0.
+            && init_perturb > 0. 
+            && dilat_bound > 0.);;
+
     let eta1 = etaN1 *. size;;
     let eta2 = etaN2 *. size;;
     let bet0 = r0 *. nu;;
@@ -69,45 +81,70 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
 
     let n = 24
 
+    let gi j = (* get i *)
+      match j with
+      | 10 -> 5
+      | 20 -> 6
+      | 12 -> 7
+      | 21 -> 8
+      | _ -> invalid_arg "expects 10, 20, 12 or 21"
+    
+    let gr j = (* get r *)
+      match j with
+      | 0 -> 1
+      | 1 -> 2
+      | 2 -> 3
+      | 12 -> 4
+      | _ -> invalid_arg "expects 0, 1, 2 or 12"
+
+    let gq j = (* get q *)
+      match j with
+      | 0 -> 9
+      | 1 -> 10
+      | 2 -> 11
+      | 12 -> 12
+      | _ -> invalid_arg "expects 0, 1, 2, or 12"
+
+
     let f t y ~z =
       let beta = bet0 *. (1. +. e *. cos (2. *. pi *. t /. 365.)) in
-      let beta_i1 = beta *. (y.{5} +. y.{7} +. eta1) /. size in
-      let beta_i2 = beta *. (y.{6} +. y.{8} +. eta2) /. size in
-      let beta_r0 = beta *. y.{1} /. size in
-      let beta_r1 = beta *. y.{2} /. size in
-      let beta_r2 = beta *. y.{3} /. size in
-      a.{1,1} <- ~-. beta_i1 -. beta_i2 ;
-      a.{2,2} <- ~-. beta_i2 ;
-      a.{3,3} <- ~-. beta_i1 ;
-      a.{5,1} <- beta_i1 ;
-      a.{6,1} <- beta_i2 ;
-      a.{7,3} <- beta_i1 ;
-      a.{8,2} <- beta_i2 ;
+      let beta_i1 = beta *. (y.{gi 10} +. y.{gi 12} +. eta1) /. size in
+      let beta_i2 = beta *. (y.{gi 20} +. y.{gi 21} +. eta2) /. size in
+      let beta_r0 = beta *. y.{gr 0} /. size in
+      let beta_r1 = beta *. y.{gr 1} /. size in
+      let beta_r2 = beta *. y.{gr 2} /. size in
+      a.{gr 0, gr 0} <- ~-. beta_i1 -. beta_i2 ;
+      a.{gr 1, gr 1} <- ~-. beta_i2 ;
+      a.{gr 2, gr 2} <- ~-. beta_i1 ;
+      a.{gi 10, gr 0} <- beta_i1 ;
+      a.{gi 20, gr 0} <- beta_i2 ;
+      a.{gi 12, gr 2} <- beta_i1 ;
+      a.{gi 21, gr 1} <- beta_i2 ;
       
-      j.{1,1} <- ~-. beta_i1 -. beta_i2 ;
-      j.{1,5} <- ~-. beta_r0 ;
-      j.{1,6} <- ~-. beta_r0 ;
-      j.{1,7} <- ~-. beta_r0 ;
-      j.{1,8} <- ~-. beta_r0 ;
-      j.{2,2} <- ~-. beta_i2 -. g2 ;
-      j.{2,6} <- ~-. beta_r1 ;
-      j.{2,8} <- ~-. beta_r1 ;
-      j.{3,3} <- ~-. beta_i1 -. g1 ;
-      j.{3,5} <- ~-. beta_r2 ;
-      j.{3,7} <- ~-. beta_r2 ;
+      j.{gr 0, gr 0} <- ~-. beta_i1 -. beta_i2 ;
+      j.{gr 0, gr 10} <- ~-. beta_r0 ;
+      j.{gr 0, gr 20} <- ~-. beta_r0 ;
+      j.{gr 0, gr 12} <- ~-. beta_r0 ;
+      j.{gr 0, gr 21} <- ~-. beta_r0 ;
+      j.{gr 1, gr 1} <- ~-. beta_i2 -. g2 ;
+      j.{gr 1, gr 20} <- ~-. beta_r1 ;
+      j.{gr 1, gr 21} <- ~-. beta_r1 ;
+      j.{gr 2, gr 2} <- ~-. beta_i1 -. g1 ;
+      j.{gr 2, gi 10} <- ~-. beta_r2 ;
+      j.{gr 2, gi 12} <- ~-. beta_r2 ;
       
-      j.{5,1} <- beta_i1 ;
-      j.{5,5} <- beta_r0 -. nu ;
-      j.{5,7} <- beta_r0 +. g2 ;
-      j.{6,1} <- beta_i2 ;
-      j.{6,6} <- beta_r0 -. nu ;
-      j.{6,8} <- beta_r0 +. g1 ;
-      j.{7,3} <- beta_i1 ;
-      j.{7,5} <- beta_r2 ;
-      j.{7,7} <- beta_r2 -. nu -. g2 ;
-      j.{8,2} <- beta_i2 ;
-      j.{8,6} <- beta_r1 ;
-      j.{8,8} <- beta_r1 -. nu -. g1 ;
+      j.{gi 10, gr 0} <- beta_i1 ;
+      j.{gi 10, gi 10} <- beta_r0 -. nu ;
+      j.{gi 10, gi 12} <- beta_r0 +. g2 ;
+      j.{gi 20, gr 0} <- beta_i2 ;
+      j.{gi 20, gi 20} <- beta_r0 -. nu ;
+      j.{gi 20, gi 21} <- beta_r0 +. g1 ;
+      j.{gi 12, gr 2} <- beta_i1 ;
+      j.{gi 12, gi 10} <- beta_r2 ;
+      j.{gi 12, gi 12} <- beta_r2 -. nu -. g2 ;
+      j.{gi 21, gr 1} <- beta_i2 ;
+      j.{gi 21, gi 20} <- beta_r1 ;
+      j.{gi 21, gi 21} <- beta_r1 -. nu -. g1 ;
       
       let x = copy ~y:x ~n:12 ~ofsx:1 y in
       let dx = copy ~y:dx ~n:12 ~ofsx:13 y in
@@ -117,15 +154,17 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       let z = copy ~y:z ~ofsy:13 tmp2 in
       z
 
-    let norm_var y =
+    let norm1_var y =
       let dx = copy ~y:dx ~n:12 ~ofsx:13 y in
       amax dx
     
-    (* FIXME breaks if two values are < 0 at once ... *)
-    (* FIXME also, useless manipulations of y ... *)
+    let norm2_var y =
+      let dx = copy ~y:dx ~n:(n/2) ~ofsx:(1 + n/2) y in
+      sqrt (dot dx dx)
+
     let check_in_domain y =
       if Vec.min ~n:12 y < 0. then false else 
-      if norm_var y > init_perturb *. dilat_bound then false else
+      if norm2_var y > init_perturb *. dilat_bound then false else
       true
 
     let shift_in_domain y ~z =   
@@ -140,17 +179,13 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
           done;
           z.{i} <- 0.
       done; 
-      let ampl =
-        let n = norm_var y in
-        if n > init_perturb *. dilat_bound then
-          n /. init_perturb
-        else 
-          1.
-      in 
-      for i = 13 to 24 do
-        z.{i} <- y.{i} /. ampl
-      done;
+      let nrm = norm2_var y in
+        if nrm > init_perturb *. dilat_bound then
+          for i = (1 + n/2) to n do
+            z.{i} <- y.{i} *. init_perturb /. nrm
+          done ;
       z
+
     let csv_init () =
       ["t" ; "h" ; 
        "R0" ; "R1" ; "R2" ; "R12" ;
@@ -160,9 +195,6 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
        "dI10" ; "dI20" ; "dI12" ; "dI21" ;
        "dQ0" ; "dQ1" ; "dQ2" ; "dQ12"]
   end
-
-
-
 
 
 module Default_Algp =

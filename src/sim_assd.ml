@@ -19,7 +19,7 @@ let tf_r = ref (365. *. 200.)
 (* FIXME problem if the user changes one but not the other *)
 let m_r = ref 3
 let prop_r = ref (Vec.of_array
-              [| 0.3 ; 0.4 ; 0.3 |])
+              [| 0.25 ; 0.54 ; 0.21 |]) (* data for Paris *)
 
 let sensi_r = ref (Vec.of_array
               [| 1.5 ; 1. ; 2. |])
@@ -136,7 +136,7 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  let init_sz = y0.{1} +. y0.{2} +. y0.{3} in
+  let init_sz = Vec.sum ~n:(!m_r * 3) y0 in
   if not (init_sz = !size_r) then
     failwith ("The announced population size is not equal to the initial population size : \n" 
               ^ (string_of_float !size_r) ^ " != " ^ (string_of_float init_sz));

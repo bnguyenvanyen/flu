@@ -21,14 +21,13 @@ let tf_r = ref (365. *. 200.)
 let f = fun n -> Random.float 2. -. 1. 
 let dx_0 = Array.init 12 f 
 let s = Array.fold_left (+.) 0. dx_0 
-let dy_0 = Array.map (fun x -> (x -. s) *. !init_perturb_r) dx_0
+let dy_0 = Array.map (fun x -> (x -. s)) dx_0
 (* FIXME need to recompute y0 later (if size_r has been changed) *)
 let y0 = Vec.of_array 
            (Array.append 
-            (Array.map (fun x -> x *. !size_r) 
              [| 0.2 ; 0.2 ; 0.2 ; 0.2 ;
                 0.001 ; 0.001 ; 0.001 ; 0.001 ;
-                0.049 ; 0.049 ; 0.049 ; 0.049 |])
+                0.049 ; 0.049 ; 0.049 ; 0.049 |]
             dy_0)
   
 
@@ -55,7 +54,7 @@ let main () =
          Arg.Float (fun x -> y0.{9} <- x);
          Arg.Float (fun x -> y0.{10} <- x);
          Arg.Float (fun x -> y0.{11} <- x);
-         Arg.Float (fun x -> y0.{12} <- x);] in
+         Arg.Float (fun x -> y0.{12} <- x)] in
   let specl = 
         [("-dest", Arg.String (change_chan_to_file chan_r),
                 ": location of the destination CSV file.\n" ^ 
@@ -63,7 +62,7 @@ let main () =
          ("-tf", Arg.Set_float tf_r,
                 ": Simulate until (in days)");
          ("-y0", Arg.Tuple specy0,
-                ": Initial conditions (Should sum to N)");
+                ": Initial proportions in each compartment (Should sum to 1)");
          ("-N", Arg.Set_float size_r, 
                 ": Total number of hosts in the population");
          ("-R0", Arg.Set_float r0_r, 
@@ -112,10 +111,13 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  let init_sz = Vec.sum ~n:12 y0 in
-  if not (init_sz = !size_r) then
-    failwith ("The announced population size is not equal to the initial population size : \n" 
-              ^ (string_of_float !size_r) ^ " != " ^ (string_of_float init_sz));
+  if not (Vec.sum ~n:12 y0 = 1.) then 
+    failwith "The user did not pass a proportion tuple (sums to 1) as y0 : \n" ;
+
+  (* We scale the population size appropriately *)
+  scal ~n:12 ~ofsx:1 !size_r y0 ;
+  (* We scale the perturbation appropriately *)
+  scal ~n:12 ~ofsx:13 !init_perturb_r y0 ;
   let module Pars = 
     struct
       let size = !size_r
