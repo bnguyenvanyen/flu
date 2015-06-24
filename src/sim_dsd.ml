@@ -75,14 +75,14 @@ let main () =
                 ": Intensity of immigration for strain 2 (per host)");
          (* it doesn't make sense to use both -etaN and -etaN1 or -etaN2 *)
          ("-etaN", Arg.Float (fun x -> etaN1_r := x; etaN2_r := x),
-                   ": Intensity of immigration for strains 1 and 2 (per host).");
+                ": Intensity of immigration for strains 1 and 2 (per host).");
          ("-g1", Arg.Set_float g1_r, 
                 ": Frequency of immunity loss for strain 1 (1/days)");
          ("-g2", Arg.Set_float g2_r, 
                 ": Frequency of immunity loss for strain 2 (1/days)");
          (* it doesn't make sense to use both -g and -g1 or -g2 *)
          ("-g", Arg.Float (fun x -> g1_r := x; g2_r := x),
-                   ": Frequency of immunity loss for strains 1 and 2 (per host).");
+                ": Frequency of immunity loss for strains 1 and 2 (per host).");
          ("-nu", Arg.Set_float nu_r, 
                 ": Frequency of recovery from infection (1/days)");
          ("-q", Arg.Set_float q_r, 
@@ -111,7 +111,8 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  if not (Vec.sum ~n:12 y0 = 1.) then 
+  if (1. -. 10. ** (~-. !size_r -. 1.)  < Vec.sum ~n:12 y0) 
+  && (Vec.sum ~n:12 y0 < 1. -. 10. ** (~-. !size_r -. 1.))  then 
     failwith "The user did not pass a proportion tuple (sums to 1) as y0 : \n" ;
 
   (* We scale the population size appropriately *)

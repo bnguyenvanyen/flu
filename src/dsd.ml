@@ -122,13 +122,13 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       a.{gi 21, gr 1} <- beta_i2 ;
       
       j.{gr 0, gr 0} <- ~-. beta_i1 -. beta_i2 ;
-      j.{gr 0, gr 10} <- ~-. beta_r0 ;
-      j.{gr 0, gr 20} <- ~-. beta_r0 ;
-      j.{gr 0, gr 12} <- ~-. beta_r0 ;
-      j.{gr 0, gr 21} <- ~-. beta_r0 ;
+      j.{gr 0, gi 10} <- ~-. beta_r0 ;
+      j.{gr 0, gi 20} <- ~-. beta_r0 ;
+      j.{gr 0, gi 12} <- ~-. beta_r0 ;
+      j.{gr 0, gi 21} <- ~-. beta_r0 ;
       j.{gr 1, gr 1} <- ~-. beta_i2 -. g2 ;
-      j.{gr 1, gr 20} <- ~-. beta_r1 ;
-      j.{gr 1, gr 21} <- ~-. beta_r1 ;
+      j.{gr 1, gi 20} <- ~-. beta_r1 ;
+      j.{gr 1, gi 21} <- ~-. beta_r1 ;
       j.{gr 2, gr 2} <- ~-. beta_i1 -. g1 ;
       j.{gr 2, gi 10} <- ~-. beta_r2 ;
       j.{gr 2, gi 12} <- ~-. beta_r2 ;
