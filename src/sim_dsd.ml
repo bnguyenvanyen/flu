@@ -3,7 +3,7 @@ open Lacaml.D
 (* system parameter values *)
 
 (* Empirical parameter set *)
-(*
+
 let size_r = ref (10. ** 5.)
 let r0_r = ref (2.)
 let e_r = ref (0.15)
@@ -12,10 +12,11 @@ let etaN2_r = ref (10. ** (-7.6))
 let g1_r = ref (1. /. (20. *. 365.))
 let g2_r = ref (1. /. (20. *. 365.))
 let nu_r = ref (1. /. 2.77) 
-let q_r = ref (2. /. 365.) (* 6 months. Seasonal forcing ? *)
-*)
+let q_r = ref (2. /. 365.)
 
-(* theoretical set *)
+
+(* Theoretical parameter set *)
+(*
 let size_r = ref (10. ** 5.)
 let r0_r = ref (5.)
 let e_r = ref (0.35)
@@ -24,7 +25,8 @@ let etaN2_r = ref (10. ** (-.7.))
 let g1_r = ref (1. /. (20. *. 365.))
 let g2_r = ref (1. /. (20. *. 365.))
 let nu_r = ref (1. /. 8.) 
-let q_r = ref (2. /. 365.) (* 6 months. Seasonal forcing ? *)
+let q_r = ref (2. /. 365.) 
+*)
 
 (* variational system behaviour *)
 let init_perturb_r = ref (10. ** (~-. 8.))
