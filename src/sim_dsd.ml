@@ -37,6 +37,8 @@ let delta_r = ref 0.1
 let min_step_r = ref (1. /. (24. *. 3600.))
 let max_step_r = ref 1.
 
+let verbose_r = ref false
+
 let main () =
   let change_chan_to_file co_r s =
     co_r := open_out s
@@ -56,7 +58,9 @@ let main () =
          Arg.Float (fun x -> y0.{11} <- x);
          Arg.Float (fun x -> y0.{12} <- x)] in
   let specl = 
-        [("-dest", Arg.String (change_chan_to_file chan_r),
+        [("-v", Arg.Set verbose_r,
+                ": verbose output (head and tail) to stdout.");
+         ("-dest", Arg.String (change_chan_to_file chan_r),
                 ": location of the destination CSV file.\n" ^ 
                 "      If not given, outputs to standard output.");
          ("-tf", Arg.Set_float tf_r,
@@ -143,6 +147,18 @@ let main () =
       let max_step = !max_step_r
     end
   in
+  if !verbose_r = true then
+    (* change to a formatted print *)
+    print_string ("The parameter values used are\n"
+      ^ "N :" ^ (string_of_float !size_r) ^ "\n"
+      ^ "R0 :" ^ (string_of_float !r0_r) ^ "\n"
+      ^ "e :" ^ (string_of_float !e_r) ^ "\n"
+      ^ "etaN1 :" ^ (string_of_float !etaN1_r) ^ "\n"
+      ^ "etaN2 :" ^ (string_of_float !etaN2_r) ^ "\n"
+      ^ "g1 :" ^ (string_of_float !g1_r) ^ "\n"
+      ^ "g2 :" ^ (string_of_float !g2_r) ^ "\n"
+      ^ "nu :" ^ (string_of_float !nu_r) ^ "\n"
+      ^ "q :" ^ (string_of_float !q_r) ^ "\n") ;
   let module Gen = Dopri5.Integrator (DsdSys) (Algp) in
   Gen.simulate !chan_r !tf_r y0
 
