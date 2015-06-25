@@ -114,8 +114,8 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       let beta_r1 = beta *. y.{gr 1} /. size in
       let beta_r2 = beta *. y.{gr 2} /. size in
       a.{gr 0, gr 0} <- ~-. beta_i1 -. beta_i2 ;
-      a.{gr 1, gr 1} <- ~-. beta_i2 ;
-      a.{gr 2, gr 2} <- ~-. beta_i1 ;
+      a.{gr 1, gr 1} <- ~-. beta_i2 -. g1 ;
+      a.{gr 2, gr 2} <- ~-. beta_i1 -. g2 ;
       a.{gi 10, gr 0} <- beta_i1 ;
       a.{gi 20, gr 0} <- beta_i2 ;
       a.{gi 12, gr 2} <- beta_i1 ;
