@@ -84,7 +84,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       let tmp_m2 = copy ~y:tmp_m2 sensi_v in
       scal beta tmp_m2 ; (* tmp_m2 now contains infectivities for each age class *)
       let tmp_m2 = Vec.div ~z:tmp_m2 tmp_m2 prop_v in
-      (* tmp_m2 now contains the per infectious per sensieptible infectivity *)
+      (* tmp_m2 now contains the per infectious per susceptible infectivity *)
       let tmp_m1 = copy ~y:tmp_m1 eta_v in (* fill tmp_m with eta *)
       (* compute the number of contacts : matrix of contacts * each number of infected *)
       let tmp_m1 = gemv ~y:tmp_m1 ~beta:1. ~ofsx:(m + 1) ~m:m ~n:m cont_m y in
@@ -97,7 +97,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       let s_dot_v = Vec.sub ~z:s_dot_v r_v infct in
       (* we only need i values times nu now *)
       scal nu i_v ;
-      let i_dot_v = Vec.sub ~z:i_dot_v beta_i i_v in
+      let i_dot_v = Vec.sub ~z:i_dot_v infct i_v in
       let r_dot_v = Vec.sub ~z:r_dot_v i_v r_v in
 
       (* update the values in the jacobian *)      
