@@ -15,15 +15,14 @@ let dilat_bound_r = ref 10.;;
 (* simulation arguments *)
 let tf_r = ref (365. *. 200.);;
 
-let ds_0 = Random.float 2. -. 1.;;
-let di_0 = Random.float 2. -. 1.;;
-let dr_0 = ~-. ds_0 -. di_0;;
-(* FIXME need to recompute y0 later (if size_r has been changed) *)
+let f = fun n -> Random.float 2. -. 1.
+let dx0 = Array.init 3 f
+let s = Array.fold_left (+.) 0. dx0
+let dy0 = Array.map (fun x -> (x -. s)) dx0
 let y0 = Vec.of_array 
-          [| 
-            0.5 *. !size_r ; 0.001 *. !size_r ; 0.499 *. !size_r ;
-            ds_0 *. !init_perturb_r ; di_0 *. !init_perturb_r ; dr_0 *. !init_perturb_r
-          |];;
+            (Array.append
+              [| 0.5 ; 0.001 ; 0.499 |]
+              dy0)
 
 (* Algorithm parameters *)
 let h0_r = ref (1. /. (24. *. 60.));;
@@ -84,10 +83,14 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  let init_sz = y0.{1} +. y0.{2} +. y0.{3} in
-  if not (init_sz = !size_r) then
-    failwith ("The announced population size is not equal to the initial population size : \n" 
-              ^ (string_of_float !size_r) ^ " != " ^ (string_of_float init_sz));
+  if (1. -. 10. ** (~-. !size_r -. 1.)  < Vec.sum ~n:3 y0) 
+  && (Vec.sum ~n:3 y0 < 1. -. 10. ** (~-. !size_r -. 1.))  then 
+    failwith "The user did not pass a proportion tuple (sums to 1) as y0 : \n" ;
+
+  (* We scale the population size appropriately *)
+  scal ~n:3 ~ofsx:1 !size_r y0 ;
+  (* We scale the perturbation appropriately *)
+  scal ~n:3 ~ofsx:4 !init_perturb_r y0 ;
   let module Pars = 
     struct
       let size = !size_r

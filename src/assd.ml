@@ -87,7 +87,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       (* tmp_m2 now contains the per infectious per susceptible infectivity *)
       let tmp_m1 = copy ~y:tmp_m1 eta_v in (* fill tmp_m with eta *)
       (* compute the number of contacts : matrix of contacts * each number of infected *)
-      let tmp_m1 = gemv ~y:tmp_m1 ~beta:1. ~ofsx:(m + 1) ~m:m ~n:m cont_m y in
+      let tmp_m1 = gemv ~y:tmp_m1 ~beta:1. ~m:m cont_m i_v in
       (* compute the "per sensieptible" number of infections *)
       let beta_i = Vec.mul ~z:beta_i tmp_m1 tmp_m2 in
       (* compute the "per infectious" number of infections *)
