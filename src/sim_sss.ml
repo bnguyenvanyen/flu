@@ -1,21 +1,22 @@
 (* system parameter values *)
-let n_r = ref (10. ** 6.);;
-let rr0_r = ref (2.);;
-let e_r = ref (0.15);;
-let etaN_r = ref (10. ** (-7.1));;
-let g_r = ref (1. /. (14. *. 365.));;
-let nu_r = ref (1. /. 2.77);;
+let n_r = ref (10. ** 6.)
+let rr0_r = ref (2.)
+let e_r = ref (0.15)
+let etaN_r = ref (10. ** (-7.1))
+let g_r = ref (1. /. (14. *. 365.))
+let nu_r = ref (1. /. 2.77)
 
 (* simulation arguments *)
 let dest_r = ref "./sim_sss_default_dest.csv"
-let tf_r = ref (365. *. 10.);;
+let tf_r = ref (365. *. 10.)
 (* FIXME need to recompute y0 later (if size_r has been changed) *)
-let s0_r = ref (int_of_float (0.5 *. !n_r));;
-let i0_r = ref (int_of_float (0.001 *. !n_r));;
-let r0_r = ref (int_of_float (0.499 *. !n_r));;
+
+let s0_r = ref 0.5
+let i0_r = ref 0.001
+let r0_r = ref 0.499
 
 (* Algorithm parameters *)
-let min_step_r = ref 1.;;
+let min_step_r = ref 1.
 
 let main () =
   let change_chan_to_file co_r s =
@@ -23,9 +24,9 @@ let main () =
   in
   let chan_r = ref stdout in
   let specy0 =
-        [Arg.Int (fun x -> s0_r := x);
-         Arg.Int (fun x -> i0_r := x);
-         Arg.Int (fun x -> r0_r := x);] in
+        [Arg.Float (fun x -> s0_r := x);
+         Arg.Float (fun x -> i0_r := x);
+         Arg.Float (fun x -> r0_r := x);] in
   let specl = 
         [("-dest", Arg.String (change_chan_to_file chan_r),
                 ": location of the destination CSV file");
@@ -58,10 +59,12 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  let init_sz = !s0_r + !i0_r + !r0_r in
-  if not (init_sz = int_of_float !n_r) then
-    failwith ("The announced population size is not equal to the initial population size : \n" 
-              ^ (string_of_float !n_r) ^ " != " ^ (string_of_int init_sz));
+  if (1. -. 1. /. (!n_r *. 10.)  < !s0_r +. !i0_r +. !r0_r ) 
+  && (!s0_r +. !i0_r +. !r0_r < 1. -. 1. /. (!n_r *. 10.))  then 
+    failwith "The initial compartment proportions don't sum to 1 \n" ;
+
+  let f x = int_of_float (!x *. !n_r) in
+  let (s0, i0, r0) = (f s0_r, f i0_r, f r0_r) in
   let module Pars = 
     struct
       let n = !n_r
@@ -79,6 +82,6 @@ let main () =
     end
   in
   let module Gen = Gill.Integrator (SssSys) (Algp) in
-  ignore(Gen.simulate !chan_r !tf_r (!s0_r, !i0_r, !r0_r))
+  ignore(Gen.simulate !chan_r !tf_r (s0, i0, r0))
 
 let () = main ()

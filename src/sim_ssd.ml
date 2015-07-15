@@ -1,19 +1,19 @@
-open Lacaml.D;;
+open Lacaml.D
 
 (* system parameter values *)
-let size_r = ref (10. ** 5.);;
-let r0_r = ref (2.);;
-let e_r = ref (0.15);;
-let etaN_r = ref (10. ** (-7.1));;
-let g_r = ref (1. /. (14. *. 365.));;
-let nu_r = ref (1. /. 2.77);;
+let size_r = ref (10. ** 5.)
+let r0_r = ref (2.)
+let e_r = ref (0.15)
+let etaN_r = ref (10. ** (-7.1))
+let g_r = ref (1. /. (14. *. 365.))
+let nu_r = ref (1. /. 2.77)
 
 (* variational system behaviour *)
-let init_perturb_r = ref (10. ** (~-. 8.));;
-let dilat_bound_r = ref 10.;;
+let init_perturb_r = ref (10. ** (~-. 8.))
+let dilat_bound_r = ref 10.
 
 (* simulation arguments *)
-let tf_r = ref (365. *. 200.);;
+let tf_r = ref (365. *. 200.)
 
 let f = fun n -> Random.float 2. -. 1.
 let dx0 = Array.init 3 f
@@ -25,10 +25,10 @@ let y0 = Vec.of_array
               dy0)
 
 (* Algorithm parameters *)
-let h0_r = ref (1. /. (24. *. 60.));;
-let delta_r = ref 0.1;;
-let min_step_r = ref (1. /. (24. *. 3600.));;
-let max_step_r = ref 1.;;
+let h0_r = ref (1. /. (24. *. 60.))
+let delta_r = ref 0.1
+let min_step_r = ref (1. /. (24. *. 3600.))
+let max_step_r = ref 1.
 
 let main () =
   let change_chan_to_file co_r s =
@@ -83,10 +83,9 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  if (1. -. 10. ** (~-. !size_r -. 1.)  < Vec.sum ~n:3 y0) 
-  && (Vec.sum ~n:3 y0 < 1. -. 10. ** (~-. !size_r -. 1.))  then 
-    failwith "The user did not pass a proportion tuple (sums to 1) as y0 : \n" ;
-
+  if (1. -. 1. /. (!size_r *. 10.) < Vec.sum ~n:3 y0) 
+  && (Vec.sum ~n:3 y0 < 1. -. 1. /. (!size_r *. 10.))  then 
+    failwith "The user did not pass a proportion tuple (sums to 1) as y0 \n" ;
   (* We scale the population size appropriately *)
   scal ~n:3 ~ofsx:1 !size_r y0 ;
   (* We scale the perturbation appropriately *)

@@ -39,7 +39,6 @@ let f = fun n -> Random.float 2. -. 1.
 let dx_0 = Array.init 12 f 
 let s = Array.fold_left (+.) 0. dx_0 
 let dy_0 = Array.map (fun x -> (x -. s)) dx_0
-(* FIXME need to recompute y0 later (if size_r has been changed) *)
 let y0 = Vec.of_array 
            (Array.append 
              [| 0.2 ; 0.2 ; 0.2 ; 0.2 ;
