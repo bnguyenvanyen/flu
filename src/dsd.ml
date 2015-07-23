@@ -29,6 +29,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
             && g1 >= 0. 
             && g2 >= 0. 
             && nu >= 0.
+            && q >= 0.
             && init_perturb > 0. 
             && dilat_bound > 0.);;
 

@@ -45,6 +45,12 @@ Executable flu_dsd
   BuildDepends: flu, lacaml
   CompiledObject: native
 
+Executable flu_adsd
+  Path: src
+  MainIs: sim_adsd.ml
+  BuildDepends: flu, lacaml
+  CompiledObject: native
+
 Executable flu_dss
   Path: src
   MainIs: sim_dss.ml

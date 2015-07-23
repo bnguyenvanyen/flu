@@ -51,10 +51,8 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       j.{k, 2 * m + k} <- g ;
       (* r_k agains r_k *)
       j.{2 * m + k, 2 * m + k} <- ~-. g ;
-      for l = 1 to m do
-        (* r_k against i_l *)
-        j.{2 * m + k, m + l} <- nu ;
-      done
+      (* r_k against i_k *)
+      j.{2 * m + k, m + k} <- nu
     done
 
     (* allocate stuff *)
@@ -88,7 +86,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       let tmp_m1 = copy ~y:tmp_m1 eta_v in (* fill tmp_m with eta *)
       (* compute the number of contacts : matrix of contacts * each number of infected *)
       let tmp_m1 = gemv ~y:tmp_m1 ~beta:1. ~m:m cont_m i_v in
-      (* compute the "per sensieptible" number of infections *)
+      (* compute the "per susceptible" number of infections *)
       let beta_i = Vec.mul ~z:beta_i tmp_m1 tmp_m2 in
       (* compute the "per infectious" number of infections *)
       let beta_s = Vec.mul ~z:beta_s tmp_m2 s_v in
@@ -108,10 +106,14 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
         (* i_k against s_k *)
         j.{m + k, k} <- beta_i.{k} ;
         for l = 1 to m do
+          let beta_s_kl = beta_s.{k} *. cont_m.{k, l} in
           (* s_k agains i_l *)
-          j.{k, m + l} <- ~-. (beta_s.{k}) ;
+          j.{k, m + l} <- ~-. beta_s_kl ;
           (* i_k agains i_l *)
-          j.{m + k, m + l} <- beta_s.{k} -. nu ;
+          if k = l then
+            j.{m + k, m + l} <- beta_s_kl -. nu 
+          else
+            j.{m + k, m + l} <- beta_s_kl ;
         done
       done ;
 
