@@ -231,8 +231,8 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
           j.{gr 2 k, gi 10 l} <- ~-. beta_r2_kl ;
           j.{gr 2 k, gi 12 l} <- ~-. beta_r2_kl ;
           (* i_k against i_l *)
-          j.{gi 12 k, gi 10 l} <- beta_r2.{k} ;
-          j.{gi 21 k, gi 20 l} <- beta_r1.{k} ;
+          j.{gi 12 k, gi 10 l} <- beta_r2_kl ;
+          j.{gi 21 k, gi 20 l} <- beta_r1_kl ;
           if k = l then 
             (j.{gi 10 k, gi 10 l} <- beta_r0_kl -. nu ;
              j.{gi 10 k, gi 12 l} <- beta_r0_kl +. g2 ;
@@ -263,6 +263,11 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       done ;
       let dx = copy ~y:dx ~n:(n / 2) ~ofsx:(n / 2 + 1) y in
       let z = gemv ~n:(n / 2) ~alpha:1. ~beta:0. ~y:z ~ofsy:(n / 2 + 1) j dx in
+      (*
+      print_string "start\n" ;
+      Vec.iteri (fun i -> fun x -> if i > 36 then (print_float x ; print_string ", ")) z ;
+      print_string "\nend\n" ;
+      *)
       z
 
     let norm1_var y =
