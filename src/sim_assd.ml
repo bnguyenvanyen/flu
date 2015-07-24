@@ -35,7 +35,9 @@ let cont_r =
   in
   (* We normalize it by its dominant eigenvalue so that the mean number 
    of secondary contacts is 1 *)
+  (*
   Mat.scal (1. /. 18.21203416) cont_r_base ;
+  *)
   ref cont_r_base
 
 let f = fun n -> Random.float 2. -. 1. 
