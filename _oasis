@@ -14,12 +14,14 @@ Library flu
   Path: src
   Modules: Gill, Dopri5, Euler_multinomial, Sss, Ssd, Assd, Dss, Dsd
   BuildDepends: csv, lacaml
+  NativeOpt: -p
 
 Executable flu_ssd
   Path: src
   MainIs: sim_ssd.ml
   BuildDepends: flu, lacaml
   CompiledObject: native
+  NativeOpt: -p
 
 Executable flu_sss
   Path: src
@@ -32,6 +34,7 @@ Executable flu_assd
   MainIs: sim_assd.ml
   BuildDepends: flu
   CompiledObject: native
+  NativeOpt: -p
 
 Executable flu_em_sss
   Path: src
@@ -44,10 +47,18 @@ Executable flu_dsd
   MainIs: sim_dsd.ml
   BuildDepends: flu, lacaml
   CompiledObject: native
+  NativeOpt: -p
 
 Executable flu_adsd
   Path: src
   MainIs: sim_adsd.ml
+  BuildDepends: flu, lacaml
+  CompiledObject: native
+  NativeOpt: -p
+
+Executable flu_cadsd
+  Path: src
+  MainIs: sim_cadsd.ml
   BuildDepends: flu, lacaml
   CompiledObject: native
 
