@@ -17,7 +17,7 @@ let tf_r = ref (365. *. 200.)
 (* FIXME initialize all that later in file ? *)
 (* FIXME find the right values *)
 (* FIXME problem if the user changes one but not the other *)
-let m_r = ref 3
+let a_r = ref 3
 let prop_r = ref (Vec.of_array
               [| 0.25 ; 0.54 ; 0.21 |]) (* data for Paris *)
 
@@ -41,7 +41,7 @@ let cont_r =
   ref cont_r_base
 
 let f = fun n -> Random.float 2. -. 1. 
-let rd_a = Vec.init (!m_r * 3) f
+let rd_a = Vec.init (!a_r * 3) f
 let s = Vec.fold (+.) 0. rd_a
 let dx_0 = Vec.map (fun x -> (x -. s) *. !init_perturb_r) rd_a
 
@@ -114,7 +114,7 @@ let main () =
                 ": Frequency of immunity loss (1/days)");
          ("-nu", Arg.Set_float nu_r, 
                 ": Frequency of recovery from infection (1/days)");
-         ("-m", Arg.Set_int m_r,
+         ("-m", Arg.Set_int a_r,
                 ": Number of age classes (default 3)");
          ("-fprop", Arg.String (load_vec_from_file prop_r),
                 " : File location of the proportions of each age class");
@@ -146,12 +146,13 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  let init_sz = Vec.sum ~n:(!m_r * 3) y0 in
+  let init_sz = Vec.sum ~n:(!a_r * 3) y0 in
   if not (init_sz = !size_r) then
     failwith ("The announced population size is not equal to the initial population size : \n" 
               ^ (string_of_float !size_r) ^ " != " ^ (string_of_float init_sz));
   let module Pars = 
     struct
+      let a = !a_r
       let size = !size_r
       let r0 = !r0_r
       let e = !e_r

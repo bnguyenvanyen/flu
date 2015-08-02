@@ -5,7 +5,7 @@ let size_r = ref (10. ** 5.)
 let r0_r = ref (2.)
 let e_r = ref (0.15)
 let etaN_r = ref (10. ** (-7.1))
-let g_r = ref (1. /. (14. *. 365.))
+let g_r = ref (1. /. (10. *. 365.))
 let nu_r = ref (1. /. 2.77)
 
 (* variational system behaviour *)
@@ -83,8 +83,8 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  if (1. -. 1. /. (!size_r *. 10.) < Vec.sum ~n:3 y0) 
-  && (Vec.sum ~n:3 y0 < 1. -. 1. /. (!size_r *. 10.))  then 
+  if (1. +. 1. /. (!size_r *. 10.) < Vec.sum ~n:3 y0) 
+  || (Vec.sum ~n:3 y0 < 1. -. 1. /. (!size_r *. 10.))  then 
     failwith "The user did not pass a proportion tuple (sums to 1) as y0 \n" ;
   (* We scale the population size appropriately *)
   scal ~n:3 ~ofsx:1 !size_r y0 ;

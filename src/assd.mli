@@ -3,6 +3,7 @@
 (** Module for parameter values *)
 module type PARS =
   sig
+    val a : int
     val size : float
     val r0 : float
     val e : float

@@ -36,8 +36,9 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
     let tmp2 = Vec.make0 3;;
 
     let n = 6
+    let m = 1
 
-    let f t y ~z =
+    let f ?(z=Vec.make0 n) t y =
       let beta = bet0 *. (1. +. e *. cos (2. *. pi *. t /. 365.)) in
       let beta_i = beta *. (y.{2} +. eta) /. size in
       let beta_s = beta *. y.{1} /. size in
@@ -57,6 +58,14 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       let z = copy ~y:z ~ofsy:4 tmp2 in
       z
 
+    let aux ?(z=Vec.make0 m) t y =
+      let beta = bet0 *. (1. +. e *. cos (2. *. pi *. t /. 365.)) in
+      let infct = beta *. y.{1} *. (y.{2} +. eta) /. size in
+      let inc = infct *. 7. *. 100000. /. size in
+      (* Weekly incidence for 100 000 *)
+      z.{1} <- inc ;
+      z
+
     let norm1_var y =
       let dx = copy ~y:dx ~n:3 ~ofsx:4 y in
       amax dx
@@ -72,7 +81,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       if norm2_var y > init_perturb *. dilat_bound then false else
       true
 
-    let shift_in_domain y ~z =   
+    let shift_in_domain ?(z=Vec.make0 n) y =   
       for i = 1 to 3 do
         if y.{i} < 0. then
           let a = y.{i} /. 2. in
@@ -97,7 +106,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       z
 
     let csv_init () =
-      ["t" ; "h" ; "S" ; "I" ; "R"; "dS" ; "dI" ; "dR"]
+      ["t" ; "h" ; "inc" ; "S" ; "I" ; "R"; "dS" ; "dI" ; "dR"]
   end;;
 
 module Default_Algp =

@@ -15,10 +15,12 @@ module type PARS =
     val nu : float
   end
 
-module Sys (Pars : PARS) : (Gill.SYSTEM with type state = int * int * int) =
+module Sys (Pars : PARS) : (Gill.SYSTEM with type state = int * int * int
+                                         and type aux = float) =
   struct
     open Pars
     type state = (int * int * int)
+    type aux = float
     let eta = etaN *. n;;
     let bet0 = r0 *. nu;;
     
@@ -55,15 +57,25 @@ module Sys (Pars : PARS) : (Gill.SYSTEM with type state = int * int * int) =
       (s, i - 1, r + 1);;
 
     let min_step = 1.
+
+    let aux_fun t st =
+      let infct = infection_rate t st in
+      infct *. 7. *. 100000. /. n
+      
+  
     let fl = [immu_loss_rate ; infection_rate ; recovery_rate]
     let ml = [immu_loss_modif ; infection_modif ; recovery_modif]
     
     let csv_init () =
-      ["t" ; "S" ; "I" ; "R"]
+      [
+       ["n=3" ; "m=1"] ;
+       ["t" ; "inc" ; "S" ; "I" ; "R"]
+      ]
     
-    let csv_line t st =
+    let csv_line t au st =
       let s, i, r = st in
       [string_of_float t ; 
+       string_of_float au ;
        string_of_int s ; string_of_int i ; string_of_int r]
   end;;
 

@@ -5,6 +5,7 @@ let pi = 4. *. atan 1.;;
 
 module type PARS =
   sig
+    val a : int
     val size : float
     val r0 : float
     val e : float
@@ -23,75 +24,77 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
     open Pars;;
   
     assert (size >= 0. 
-            && r0 >= 0. 
-            && e >= 0. 
-            && etaN >= 0. 
-            && g >= 0. 
-            && nu >= 0.
-            && init_perturb > 0. 
-            && dilat_bound > 0.);;
+         && r0 >= 0. 
+         && e >= 0. 
+         && etaN >= 0. 
+         && g >= 0. 
+         && nu >= 0.
+         && init_perturb > 0. 
+         && dilat_bound > 0.);;
 
-    assert (Mat.dim1 cont_m = Mat.dim2 cont_m
-            && Vec.dim sensi_v = Vec.dim prop_v
-            && Vec.dim prop_v = Mat.dim1 cont_m);;
-    let m = Vec.dim prop_v
+    assert (a = Mat.dim1 cont_m 
+         && a = Mat.dim2 cont_m
+         && a = Vec.dim sensi_v 
+         && a = Vec.dim prop_v);;
 
     let eta = etaN *. size
     let bet0 = r0 *. nu
 
-    let n = 3 * m * 2
-    let eta_v = Vec.make m eta;;
+    let n = 3 * a * 2
+    let m = 1
+
+    let eta_v = Vec.make a eta;;
     (* prop_v will contain the number of hosts in each age class (and not the proportion) *)
     scal size prop_v 
 
     (* initialize the jacobian *)
-    let j = Mat.make0 (n / 2) (n / 2);;(* jacobian *)
-    for k = 1 to m do
+    let jac_m = Mat.make0 (n / 2) (n / 2);;(* jacobian *)
+    for k = 1 to a do
       (* s_k against r_k *)
-      j.{k, 2 * m + k} <- g ;
+      jac_m.{k, 2 * a + k} <- g ;
       (* r_k agains r_k *)
-      j.{2 * m + k, 2 * m + k} <- ~-. g ;
+      jac_m.{2 * a + k, 2 * a + k} <- ~-. g ;
       (* r_k against i_k *)
-      j.{2 * m + k, m + k} <- nu
+      jac_m.{2 * a + k, a + k} <- nu
     done
 
     (* allocate stuff *)
-    let s_v = Vec.make0 m
-    let i_v = Vec.make0 m
-    let r_v = Vec.make0 m
-    let beta_i = Vec.make0 m
-    let beta_s = Vec.make0 m
-    let s_dot_v = Vec.make0 m
-    let i_dot_v = Vec.make0 m
-    let r_dot_v = Vec.make0 m
+    let s_v = Vec.make0 a
+    let i_v = Vec.make0 a
+    let r_v = Vec.make0 a
+    let beta_i = Vec.make0 a
+    let beta_s = Vec.make0 a
+    let s_dot_v = Vec.make0 a
+    let i_dot_v = Vec.make0 a
+    let r_dot_v = Vec.make0 a
 
     let dx = Vec.make0 (n / 2) (* the ds, di, dr values *)
 
     let tmp_x = Vec.make0 (n / 2)
     let tmp_dx = Vec.make0 (n / 2)
-    let tmp_m1 = Vec.make0 m
-    let tmp_m2 = Vec.make0 m
+    let tmp_a1 = Vec.make0 a
+    let tmp_a2 = Vec.make0 a
 
-    let f t y ~z =
-      let s_v = copy ~y:s_v ~ofsx:1 ~n:m y in
-      let i_v = copy ~y:i_v ~ofsx:(m + 1) ~n:m y in
-      let r_v = copy ~y:r_v ~ofsx:(2 * m + 1) ~n:m y in
+    let f ?(z=Vec.make0 n) t y =
+      let s_v = copy ~y:s_v ~ofsx:1 ~n:a y in
+      let i_v = copy ~y:i_v ~ofsx:(a + 1) ~n:a y in
+      let r_v = copy ~y:r_v ~ofsx:(2 * a + 1) ~n:a y in
       (* r values are always used times g *)
       scal g r_v ;
       let beta = bet0 *. (1. +. e *. cos (2. *. pi *. t /. 365.)) in
-      let tmp_m2 = copy ~y:tmp_m2 sensi_v in
-      scal beta tmp_m2 ; (* tmp_m2 now contains infectivities for each age class *)
-      let tmp_m2 = Vec.div ~z:tmp_m2 tmp_m2 prop_v in
-      (* tmp_m2 now contains the per infectious per susceptible infectivity *)
-      let tmp_m1 = copy ~y:tmp_m1 eta_v in (* fill tmp_m with eta *)
+      let tmp_a2 = copy ~y:tmp_a2 sensi_v in
+      scal beta tmp_a2 ; (* tmp_m2 now contains infectivities for each age class *)
+      let tmp_a2 = Vec.div ~z:tmp_a2 tmp_a2 prop_v in
+      (* tmp_a2 now contains the per infectious per susceptible infectivity *)
+      let tmp_a1 = copy ~y:tmp_a1 eta_v in (* fill tmp_a with eta *)
       (* compute the number of contacts : matrix of contacts * each number of infected *)
-      let tmp_m1 = gemv ~y:tmp_m1 ~beta:1. ~m:m cont_m i_v in
+      let tmp_a1 = gemv ~y:tmp_a1 ~beta:1. ~m:a cont_m i_v in
       (* compute the "per susceptible" number of infections *)
-      let beta_i = Vec.mul ~z:beta_i tmp_m1 tmp_m2 in
+      let beta_i = Vec.mul ~z:beta_i tmp_a1 tmp_a2 in
       (* compute the "per infectious" number of infections *)
-      let beta_s = Vec.mul ~z:beta_s tmp_m2 s_v in
+      let beta_s = Vec.mul ~z:beta_s tmp_a2 s_v in
       (* compute the total number of infections *)
-      let infct = Vec.mul ~z:tmp_m1 beta_i s_v in (* stored in tmp_m1 ! *)
+      let infct = Vec.mul ~z:tmp_a1 beta_i s_v in (* stored in tmp_m1 ! *)
       let s_dot_v = Vec.sub ~z:s_dot_v r_v infct in
       (* we only need i values times nu now *)
       scal nu i_v ;
@@ -100,31 +103,51 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
 
       (* update the values in the jacobian *)      
       (* maybe find more efficient than these loops... *)
-      for k = 1 to m do
+      for k = 1 to a do
         (* s_k against s_k *)
-        j.{k, k} <- ~-. (beta_i.{k}) ;
+        jac_m.{k, k} <- ~-. (beta_i.{k}) ;
         (* i_k against s_k *)
-        j.{m + k, k} <- beta_i.{k} ;
-        for l = 1 to m do
+        jac_m.{a + k, k} <- beta_i.{k} ;
+        for l = 1 to a do
           let beta_s_kl = beta_s.{k} *. cont_m.{k, l} in
           (* s_k agains i_l *)
-          j.{k, m + l} <- ~-. beta_s_kl ;
+          jac_m.{k, a + l} <- ~-. beta_s_kl ;
           (* i_k agains i_l *)
           if k = l then
-            j.{m + k, m + l} <- beta_s_kl -. nu 
+            jac_m.{a + k, a + l} <- beta_s_kl -. nu 
           else
-            j.{m + k, m + l} <- beta_s_kl ;
+            jac_m.{a + k, a + l} <- beta_s_kl ;
         done
       done ;
 
       let dx = copy ~y:dx ~n:(n/2) ~ofsx:(1 + n/2) y in
-      let tmp_dx = gemv ~alpha:1. ~beta:0. ~y:tmp_dx j dx in
+      let tmp_dx = gemv ~alpha:1. ~beta:0. ~y:tmp_dx jac_m dx in
       (* we copy the computed values for the base system to z *)
       let z = copy ~y:z ~ofsy:1 s_dot_v in
-      let z = copy ~y:z ~ofsy:(m + 1) i_dot_v in
-      let z = copy ~y:z ~ofsy:(2 * m + 1) r_dot_v in
+      let z = copy ~y:z ~ofsy:(a + 1) i_dot_v in
+      let z = copy ~y:z ~ofsy:(2 * a + 1) r_dot_v in
       (* we copy the computed values for the variational system to z *)
       let z = copy ~y:z ~ofsy:(1 + n/2) tmp_dx in
+      z
+
+    let aux ?(z=Vec.make0 m) t y =
+      let beta = bet0 *. (1. +. e *. cos (2. *. pi *. t /. 365.)) in
+      let s_v = copy ~y:s_v ~ofsx:1 ~n:a y in
+      let i_v = copy ~y:i_v ~ofsx:(a + 1) ~n:a y in
+      let tmp_a2 = copy ~y:tmp_a2 sensi_v in
+      scal beta tmp_a2 ; (* tmp_a2 now contains infectivities for each age class *)
+      let tmp_a2 = Vec.div ~z:tmp_a2 tmp_a2 prop_v in
+      (* tmp_a2 now contains the per infectious per susceptible infectivity *)
+      let tmp_a1 = copy ~y:tmp_a1 eta_v in (* fill tmp_a with eta *)
+      (* compute the number of contacts : matrix of contacts * each number of infected *)
+      let tmp_a1 = gemv ~y:tmp_a1 ~beta:1. ~m:a cont_m i_v in
+      (* compute the "per susceptible" number of infections *)
+      let beta_i = Vec.mul ~z:beta_i tmp_a1 tmp_a2 in
+      (* compute the "per infectious" number of infections *)
+      let infct = Vec.mul ~z:tmp_a1 beta_i s_v in (* stored in tmp_a1 ! *)
+      scal (7. *. 100000. /. size) infct ;
+      (* Weekly incidence for 100 000 *)
+      z.{1} <- Vec.sum infct ;
       z
 
     let norm1_var y =
@@ -140,15 +163,15 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       if norm2_var y > init_perturb *. dilat_bound then false else
       true
 
-    let shift_in_domain y ~z =   
+    let shift_in_domain ?(z=Vec.make0 n) y =   
       for i = 1 to (n/2) do
         if y.{i} < 0. then
-          let a = y.{i} /. (float_of_int (n/2 - 1)) in
+          let d = y.{i} /. (float_of_int (n/2 - 1)) in
           for j = 1 to (i - 1) do
-            z.{j} <- y.{j} +. a
+            z.{j} <- y.{j} +. d
           done;
           for j = (i + 1) to (n/2) do
-            z.{j} <- y.{j} +.a
+            z.{j} <- y.{j} +. d
           done;
           z.{i} <- 0.;
       done;  
@@ -167,9 +190,10 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
         | false -> 
             s_l
       in
-      ["t" ; "h"] 
+      ["t" ; "h" ; "inc"] 
       @ List.concat
-      (List.map (fun s -> f s m []) ["S" ; "I" ; "R" ; "dS" ; "dI" ; "dR"])
+      (List.map (fun s -> f s a []) ["S_" ; "I_" ; "R_" ; 
+                                     "dS_" ; "dI_" ; "dR_" ])
   end;;
 
 module Default_Algp =

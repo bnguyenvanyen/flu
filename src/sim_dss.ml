@@ -2,21 +2,20 @@
 let n_r = ref (10. ** 6.);;
 let r0_r = ref (2.);;
 let e_r = ref (0.15);;
-let etaN1_r = ref (10. ** (-7.1));;
-let etaN2_r = ref (10. ** (-7.1));;
-let g1_r = ref (1. /. (14. *. 365.));;
-let g2_r = ref (1. /. (14. *. 365.));;
+let etaN1_r = ref (10. ** (-7.6));;
+let etaN2_r = ref (10. ** (-7.6));;
+let g1_r = ref (1. /. (10. *. 365.));;
+let g2_r = ref (1. /. (10. *. 365.));;
 let nu_r = ref (1. /. 2.77);;
-let q_r = ref (1.);;
+let q_r = ref (2. /. 365.);;
 
 (* simulation arguments *)
 let dest_r = ref "./sim_sss_default_dest.csv"
-let tf_r = ref (365. *. 10.);;
+let tf_r = ref (365. *. 100.);;
 (* FIXME need to recompute y0 later (if size_r has been changed) *)
-let y0 = (Array.map (fun x -> int_of_float (x *. !n_r)) 
-             [| 0.2 ; 0.2 ; 0.2 ; 0.2 ;
-                0.001 ; 0.001 ; 0.001 ; 0.001 ;
-                0.049 ; 0.049 ; 0.049 ; 0.049 |])
+let y0 =   [| 0.2 ; 0.2 ; 0.2 ; 0.2 ;
+              0.001 ; 0.001 ; 0.001 ; 0.001 ;
+              0.049 ; 0.049 ; 0.049 ; 0.049 |]
 (* Algorithm parameters *)
 let min_step_r = ref 1.;;
 
@@ -26,18 +25,18 @@ let main () =
   in
   let chan_r = ref stdout in
   let specy0 =
-        [Arg.Int (fun x -> y0.(1) <- x);
-         Arg.Int (fun x -> y0.(2) <- x);
-         Arg.Int (fun x -> y0.(3) <- x);
-         Arg.Int (fun x -> y0.(4) <- x);
-         Arg.Int (fun x -> y0.(5) <- x);
-         Arg.Int (fun x -> y0.(6) <- x);
-         Arg.Int (fun x -> y0.(7) <- x);
-         Arg.Int (fun x -> y0.(8) <- x);
-         Arg.Int (fun x -> y0.(9) <- x);
-         Arg.Int (fun x -> y0.(10) <- x);
-         Arg.Int (fun x -> y0.(11) <- x);
-         Arg.Int (fun x -> y0.(12) <- x)] in
+        [Arg.Float (fun x -> y0.(1) <- x);
+         Arg.Float (fun x -> y0.(2) <- x);
+         Arg.Float (fun x -> y0.(3) <- x);
+         Arg.Float (fun x -> y0.(4) <- x);
+         Arg.Float (fun x -> y0.(5) <- x);
+         Arg.Float (fun x -> y0.(6) <- x);
+         Arg.Float (fun x -> y0.(7) <- x);
+         Arg.Float (fun x -> y0.(8) <- x);
+         Arg.Float (fun x -> y0.(9) <- x);
+         Arg.Float (fun x -> y0.(10) <- x);
+         Arg.Float (fun x -> y0.(11) <- x);
+         Arg.Float (fun x -> y0.(12) <- x)] in
   let specl = 
         [("-dest", Arg.String (change_chan_to_file chan_r),
                 ": location of the destination CSV file");
@@ -76,10 +75,10 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  let init_sz = Array.fold_left (+) 0 y0 in
-  if not (init_sz = int_of_float !n_r) then
-    failwith ("The announced population size is not equal to the initial population size : \n" 
-              ^ (string_of_float !n_r) ^ " != " ^ (string_of_int init_sz));
+  if (1. +. 1. /. (!n_r *. 10.)  < Array.fold_left (+.) 0. y0 ) 
+  || (Array.fold_left (+.) 0. y0 < 1. -. 1. /. (!n_r *. 10.))  then 
+    failwith "The initial compartment proportions don't sum to 1 \n" ;
+  let y0 = Array.map (fun x -> int_of_float (x *. !n_r)) y0 in
   let module Pars = 
     struct
       let n = !n_r

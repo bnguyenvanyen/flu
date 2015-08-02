@@ -18,7 +18,8 @@ module type PARS =
   end
 (** Functor initializing the module associated to parameter values *)
 module Sys : functor (Pars : PARS) -> 
-                     (Gill.SYSTEM with type state = int array)
+                     (Gill.SYSTEM with type state = int array
+                                   and type aux = float * float)
 
 (** Reasonable algorithm parameter values *)
 module Default_Algp : Gill.ALGPARAMS

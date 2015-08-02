@@ -41,7 +41,7 @@ let s = Array.fold_left (+.) 0. rdu
 let dx0 = Vec.of_array (Array.map (fun x -> (x -. s)) rdu)
 let x0 = Vec.of_array 
            [| 0.2 ; 0.2 ; 0.2 ; 0.2 ;
-              0.001 ; 0.001 ; 0.001 ; 0.001 ;
+              0.0015 ; 0.0005 ; 0.001 ; 0.001 ;
               0.049 ; 0.049 ; 0.049 ; 0.049 |]
   
 
@@ -129,8 +129,8 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  if (1. -. 10. ** (~-. !size_r -. 1.)  < Vec.sum ~n:12 x0) 
-  && (Vec.sum ~n:12 x0 < 1. -. 10. ** (~-. !size_r -. 1.))  then 
+  if (1. +. 1. /. (!size_r *. 10.)  < Vec.sum ~n:12 x0) 
+  || (Vec.sum ~n:12 x0 < 1. -. 1. /. (!size_r *. 10.))  then 
     failwith "The user did not pass a proportion tuple (sums to 1) as x0 : \n" ;
   (* We scale the population size appropriately *)
   scal ~n:12 ~ofsx:1 !size_r x0 ;

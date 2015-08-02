@@ -1,34 +1,36 @@
-(** Double strain age-structured deterministic simulation module *)
+(** Double strain age-structured city-structured deterministic simulation module *)
 
 (** Module for parameter values *)
 module type PARS =
   sig
-    (** Number of age-classes *)
+    (** Number of age classes *)
     val a : int
+    (** Number of cities *)
+    val c : int
     (** Number of hosts *)
     val size : float
     (** Basic reproductive ratio *)
     val r0 : float
     (** Strength of the seasonal forcing *)
     val e : float
-    (** Immigration rate (per host) of the first strain *)
-    val etaN1 : float
-    (** Immigration rate (per host) of the second strain *)
-    val etaN2 : float
-    (** Immunity loss rate of the first strain *)
+    (** Immunity loss rate for the first strain *)
     val g1 : float
-    (** Immunity loss rate of the second strain *)
+    (** Immunity loss rate for the second strain *)
     val g2 : float
     (** Recovery rate *)
     val nu : float
     (** Full cross-immunity loss rate *)
     val q : float
-    (** Relative sensibilities of age-classes *)
-    val sensi_v : Lacaml_float64.vec
-    (** Proportions of the age-classes in the population *)
-    val prop_v : Lacaml_float64.vec
+    (** Relative sensibilities of the age-classes *)
+    val sensi_base_v : Lacaml_float64.vec
+    (** Proportions of the age classes *)
+    val age_prop_v : Lacaml_float64.vec
     (** Contact matrix *)
-    val cont_m : Lacaml_float64.mat
+    val cont_base_m : Lacaml_float64.mat
+    (** Transport rate between cities *)
+    val eta_base_m : Lacaml_float64.mat
+    (** Proportions of the cities *)
+    val city_prop_v : Lacaml_float64.vec
     val init_perturb : float
     val dilat_bound : float
   end;;

@@ -3,11 +3,17 @@
 (** Module for parameter values *)
 module type PARS =
   sig
+    (** Number of hosts *)
     val size : float
+    (** Basic reproductive ratio *)
     val r0 : float
+    (** Strength of the seasonal forcing *)
     val e : float
+    (** Immigration rate (per host) *)
     val etaN : float
+    (** Immunity loss rate *)
     val g : float
+    (** Recovery rate *)
     val nu : float
     val init_perturb : float
     val dilat_bound : float

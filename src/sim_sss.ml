@@ -3,12 +3,12 @@ let n_r = ref (10. ** 6.)
 let rr0_r = ref (2.)
 let e_r = ref (0.15)
 let etaN_r = ref (10. ** (-7.1))
-let g_r = ref (1. /. (14. *. 365.))
+let g_r = ref (1. /. (10. *. 365.))
 let nu_r = ref (1. /. 2.77)
 
 (* simulation arguments *)
 let dest_r = ref "./sim_sss_default_dest.csv"
-let tf_r = ref (365. *. 10.)
+let tf_r = ref (365. *. 200.)
 (* FIXME need to recompute y0 later (if size_r has been changed) *)
 
 let s0_r = ref 0.5
@@ -59,8 +59,8 @@ let main () =
   (* parse the command line and update the parameter values *)
   Arg.parse specl anon_print usage_msg ;
   (* sanity check *)
-  if (1. -. 1. /. (!n_r *. 10.)  < !s0_r +. !i0_r +. !r0_r ) 
-  && (!s0_r +. !i0_r +. !r0_r < 1. -. 1. /. (!n_r *. 10.))  then 
+  if (1. +. 1. /. (!n_r *. 10.)  < !s0_r +. !i0_r +. !r0_r ) 
+  || (!s0_r +. !i0_r +. !r0_r < 1. -. 1. /. (!n_r *. 10.))  then 
     failwith "The initial compartment proportions don't sum to 1 \n" ;
 
   let f x = int_of_float (!x *. !n_r) in

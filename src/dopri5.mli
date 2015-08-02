@@ -6,11 +6,20 @@ module type SYSTEM =
   sig
     (** dimension of the system *)
     val n : int
+    (** number of auxiliary variables *)
+    val m : int
     (** vector field of the system. Updates z. *)
-    val f : float -> 
+    val f : 
+            ?z:Lacaml_float64.vec -> 
+            float -> 
             Lacaml_float64.vec -> 
-            z:Lacaml_float64.vec -> 
             Lacaml_float64.vec
+    (** aux computes auxiliary statistics on the system. *)
+    val aux : 
+            ?z:Lacaml_float64.vec ->
+            float ->
+            Lacaml_float64.vec ->
+            Lacaml_float64.vec  
     (** check_in_domain y returns true if y is in the domain, false otherwise *)
     val check_in_domain : 
             Lacaml_float64.vec ->
@@ -18,8 +27,8 @@ module type SYSTEM =
     (** shift_in_domain y updates and returns y.
         Called if y is not in the domain, it should shift it back in. *)
     val shift_in_domain : 
+            ?z:Lacaml_float64.vec ->
             Lacaml_float64.vec ->
-            z:Lacaml_float64.vec ->
             Lacaml_float64.vec
     val csv_init :
             unit ->

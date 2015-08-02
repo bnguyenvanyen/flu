@@ -36,12 +36,6 @@ Executable flu_assd
   CompiledObject: native
   NativeOpt: -p
 
-Executable flu_em_sss
-  Path: src
-  MainIs: sim_em_sss.ml
-  BuildDepends: flu
-  CompiledObject: best
-
 Executable flu_dsd
   Path: src
   MainIs: sim_dsd.ml

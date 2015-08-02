@@ -6,16 +6,23 @@ open Lacaml.D;;
 module type SYSTEM =
   sig
     val n : int
-    val f : float -> 
+    val m : int
+    val f : 
+            ?z:Lacaml_float64.vec -> 
+            float -> 
             Lacaml_float64.vec -> 
-            z:Lacaml_float64.vec -> 
             Lacaml_float64.vec
+    val aux : 
+            ?z:Lacaml_float64.vec ->
+            float ->
+            Lacaml_float64.vec ->
+            Lacaml_float64.vec  
     val check_in_domain :
             Lacaml_float64.vec ->
             bool
     val shift_in_domain : 
+            ?z:Lacaml_float64.vec ->
             Lacaml_float64.vec ->
-            z:Lacaml_float64.vec ->
             Lacaml_float64.vec
     val csv_init :
             unit ->
@@ -143,7 +150,7 @@ module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) : INTEGR =
     
     (* compute dt *)
     
-    let loop t h k y4 y5 y =
+    let loop t h k y4 y5 y z =
       let k = compute_k t h k y in
       let y4 = runge_kutta h k y4 y b4 in
       let y5 = runge_kutta h k y5 y b5 in
@@ -166,30 +173,37 @@ module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) : INTEGR =
           Sys.shift_in_domain ~z:y y
         else
           y
-      in (t, h, y)
+      in
+      let z = Sys.aux ~z t y
+      in 
+      (t, h, y, z)
 
-    let csv_line t h y =
-      let state_string = ref [] in
-      for i = 1 to Sys.n do
-        state_string := (string_of_float y.{i}) :: !state_string 
-      done ;
-      [string_of_float t; string_of_float h] @ (List.rev !state_string)
+    let csv_info () =
+        ["n=" ^ string_of_int Sys.n ; "m=" ^ string_of_int Sys.m]
+
+    let csv_line t h y z =
+      let l = ref [] in
+      Vec.iter (fun x -> l := string_of_float x :: !l) z ;
+      Vec.iter (fun x -> l := string_of_float x :: !l) y ;
+      [string_of_float t; string_of_float h] @ (List.rev !l)
 
     let simulate st_chan tf y0 =
       (* outputs the data as csv to chan *)
       let chan = Csv.to_channel st_chan in
+      Csv.output_record chan (csv_info ()) ;
       Csv.output_record chan (Sys.csv_init ()) ;
       let t = ref 0. in
       let h = ref Algp.h0 in
       let y4 = copy y0 in
       let y5 = copy y0 in
       let y = copy y0  in
+      let z = Sys.aux 0. y0 in
       let k = Mat.make0 Sys.n 7 in
       while !t < tf do
-        let nt, nh, y = loop !t !h k y4 y5 y in
+        let nt, nh, y, z = loop !t !h k y4 y5 y z in
         t := nt;
         h := nh;
-        Csv.output_record chan (csv_line nt nh y)
+        Csv.output_record chan (csv_line nt nh y z)
       done;
       (!t, y) 
   end;;

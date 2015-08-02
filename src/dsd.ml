@@ -44,7 +44,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
     let nq = ~-. q;;
     let qg1 = ~-. q -. g1;;
     let qg2 = ~-. q -. g2;;
-    let a = Mat.of_array (* to simplify computations *)
+    let lin_f_m = Mat.of_array (* to simplify computations *)
       [| 
         [| 0. ; g1 ; g2 ; 0. ; 0. ; 0. ; 0. ; 0. ; q  ; 0. ; 0. ; 0. |] ;
         [| 0. ; 0. ; 0. ; g2 ; 0. ; 0. ; 0. ; 0. ; 0. ; q  ; 0. ; 0. |] ;
@@ -59,7 +59,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
         [| 0. ; 0. ; 0. ; 0. ; 0. ; nu ; 0. ; 0. ; 0. ; 0. ; qg2; g1 |] ;
         [| 0. ; 0. ; 0. ; 0. ; 0. ; 0. ; nu ; nu ; 0. ; 0. ; 0. ; g12 -. q |]
       |];;
-    let j = Mat.of_array (* there's no copy function :( *)
+    let jac_m = Mat.of_array (* there's no copy function :( *)
       [| 
         [| 0. ; g1 ; g2 ; 0. ; 0. ; 0. ; 0. ; 0. ; q  ; 0. ; 0. ; 0. |] ;
         [| 0. ; 0. ; 0. ; g2 ; 0. ; 0. ; 0. ; 0. ; 0. ; q  ; 0. ; 0. |] ;
@@ -81,6 +81,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
     let tmp2 = Vec.make0 12;;
 
     let n = 24
+    let m = 2
 
     let gi j = (* get i *)
       match j with
@@ -107,52 +108,67 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       | _ -> invalid_arg "expects 0, 1, 2, or 12"
 
 
-    let f t y ~z =
+    let f ?(z=Vec.make0 n) t y =
       let beta = bet0 *. (1. +. e *. cos (2. *. pi *. t /. 365.)) in
       let beta_i1 = beta *. (y.{gi 10} +. y.{gi 12} +. eta1) /. size in
       let beta_i2 = beta *. (y.{gi 20} +. y.{gi 21} +. eta2) /. size in
       let beta_r0 = beta *. y.{gr 0} /. size in
       let beta_r1 = beta *. y.{gr 1} /. size in
       let beta_r2 = beta *. y.{gr 2} /. size in
-      a.{gr 0, gr 0} <- ~-. beta_i1 -. beta_i2 ;
-      a.{gr 1, gr 1} <- ~-. beta_i2 -. g1 ;
-      a.{gr 2, gr 2} <- ~-. beta_i1 -. g2 ;
-      a.{gi 10, gr 0} <- beta_i1 ;
-      a.{gi 20, gr 0} <- beta_i2 ;
-      a.{gi 12, gr 2} <- beta_i1 ;
-      a.{gi 21, gr 1} <- beta_i2 ;
+      lin_f_m.{gr 0, gr 0} <- ~-. beta_i1 -. beta_i2 ;
+      lin_f_m.{gr 1, gr 1} <- ~-. beta_i2 -. g1 ;
+      lin_f_m.{gr 2, gr 2} <- ~-. beta_i1 -. g2 ;
+      lin_f_m.{gi 10, gr 0} <- beta_i1 ;
+      lin_f_m.{gi 20, gr 0} <- beta_i2 ;
+      lin_f_m.{gi 12, gr 2} <- beta_i1 ;
+      lin_f_m.{gi 21, gr 1} <- beta_i2 ;
       
-      j.{gr 0, gr 0} <- ~-. beta_i1 -. beta_i2 ;
-      j.{gr 0, gi 10} <- ~-. beta_r0 ;
-      j.{gr 0, gi 20} <- ~-. beta_r0 ;
-      j.{gr 0, gi 12} <- ~-. beta_r0 ;
-      j.{gr 0, gi 21} <- ~-. beta_r0 ;
-      j.{gr 1, gr 1} <- ~-. beta_i2 -. g2 ;
-      j.{gr 1, gi 20} <- ~-. beta_r1 ;
-      j.{gr 1, gi 21} <- ~-. beta_r1 ;
-      j.{gr 2, gr 2} <- ~-. beta_i1 -. g1 ;
-      j.{gr 2, gi 10} <- ~-. beta_r2 ;
-      j.{gr 2, gi 12} <- ~-. beta_r2 ;
+      jac_m.{gr 0, gr 0} <- ~-. beta_i1 -. beta_i2 ;
+      jac_m.{gr 0, gi 10} <- ~-. beta_r0 ;
+      jac_m.{gr 0, gi 20} <- ~-. beta_r0 ;
+      jac_m.{gr 0, gi 12} <- ~-. beta_r0 ;
+      jac_m.{gr 0, gi 21} <- ~-. beta_r0 ;
+      jac_m.{gr 1, gr 1} <- ~-. beta_i2 -. g2 ;
+      jac_m.{gr 1, gi 20} <- ~-. beta_r1 ;
+      jac_m.{gr 1, gi 21} <- ~-. beta_r1 ;
+      jac_m.{gr 2, gr 2} <- ~-. beta_i1 -. g1 ;
+      jac_m.{gr 2, gi 10} <- ~-. beta_r2 ;
+      jac_m.{gr 2, gi 12} <- ~-. beta_r2 ;
       
-      j.{gi 10, gr 0} <- beta_i1 ;
-      j.{gi 10, gi 10} <- beta_r0 -. nu ;
-      j.{gi 10, gi 12} <- beta_r0 +. g2 ;
-      j.{gi 20, gr 0} <- beta_i2 ;
-      j.{gi 20, gi 20} <- beta_r0 -. nu ;
-      j.{gi 20, gi 21} <- beta_r0 +. g1 ;
-      j.{gi 12, gr 2} <- beta_i1 ;
-      j.{gi 12, gi 10} <- beta_r2 ;
-      j.{gi 12, gi 12} <- beta_r2 -. nu -. g2 ;
-      j.{gi 21, gr 1} <- beta_i2 ;
-      j.{gi 21, gi 20} <- beta_r1 ;
-      j.{gi 21, gi 21} <- beta_r1 -. nu -. g1 ;
+      jac_m.{gi 10, gr 0} <- beta_i1 ;
+      jac_m.{gi 10, gi 10} <- beta_r0 -. nu ;
+      jac_m.{gi 10, gi 12} <- beta_r0 +. g2 ;
+      jac_m.{gi 20, gr 0} <- beta_i2 ;
+      jac_m.{gi 20, gi 20} <- beta_r0 -. nu ;
+      jac_m.{gi 20, gi 21} <- beta_r0 +. g1 ;
+      jac_m.{gi 12, gr 2} <- beta_i1 ;
+      jac_m.{gi 12, gi 10} <- beta_r2 ;
+      jac_m.{gi 12, gi 12} <- beta_r2 -. nu -. g2 ;
+      jac_m.{gi 21, gr 1} <- beta_i2 ;
+      jac_m.{gi 21, gi 20} <- beta_r1 ;
+      jac_m.{gi 21, gi 21} <- beta_r1 -. nu -. g1 ;
       
       let x = copy ~y:x ~n:12 ~ofsx:1 y in
       let dx = copy ~y:dx ~n:12 ~ofsx:13 y in
-      let tmp1 = gemv ~alpha:1. ~beta:0. ~y:tmp1 a x in
-      let tmp2 = gemv ~alpha:1. ~beta:0. ~y:tmp2 j dx in
+      let tmp1 = gemv ~alpha:1. ~beta:0. ~y:tmp1 lin_f_m x in
+      let tmp2 = gemv ~alpha:1. ~beta:0. ~y:tmp2 jac_m dx in
       let z = copy ~y:z ~ofsy:1 tmp1 in
       let z = copy ~y:z ~ofsy:13 tmp2 in
+      z
+
+    let aux ?(z=Vec.make0 m) t y =
+      let beta = bet0 *. (1. +. e *. cos (2. *. pi *. t /. 365.)) in
+      let infct1 = beta *. (y.{gr 0} +. y.{gr 2}) 
+                 *. (y.{gi 10} +. y.{gi 12} +. eta1) /. size 
+      and infct2 = beta *. (y.{gr 0} +. y.{gr 1}) 
+                 *. (y.{gi 20} +. y.{gi 21} +. eta2) /. size 
+      in
+      let inc1 = infct1 *. 7. *. 100000. /. size
+      and inc2 = infct2 *. 7. *. 100000. /. size 
+      in
+      (* Weekly incidence for 100 000 *)
+      z.{1} <- inc1 ;
+      z.{2} <- inc2 ;
       z
 
     let norm1_var y =
@@ -168,7 +184,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       if norm2_var y > init_perturb *. dilat_bound then false else
       true
 
-    let shift_in_domain y ~z =   
+    let shift_in_domain ?(z=Vec.make0 n) y =   
       for i = 1 to 12 do
         if y.{i} < 0. then 
           let a = y.{i} /. 11. in
@@ -188,13 +204,13 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       z
 
     let csv_init () =
-      ["t" ; "h" ; 
+      ["t" ; "h" ; "inc1" ; "inc2" ;
        "R0" ; "R1" ; "R2" ; "R12" ;
        "I10" ; "I20" ; "I12" ; "I21" ;
        "Q0" ; "Q1" ; "Q2" ; "Q12" ;
        "dR0" ; "dR1" ; "dR2" ; "dR12" ;
        "dI10" ; "dI20" ; "dI12" ; "dI21" ;
-       "dQ0" ; "dQ1" ; "dQ2" ; "dQ12"]
+       "dQ0" ; "dQ1" ; "dQ2" ; "dQ12" ]
   end
 
 
