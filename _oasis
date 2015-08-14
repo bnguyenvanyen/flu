@@ -50,6 +50,12 @@ Executable flu_adsd
   CompiledObject: native
   NativeOpt: -p
 
+Executable flu_cassd
+  Path: src
+  MainIs: sim_cassd.ml
+  BuildDepends: flu, lacaml
+  CompiledObject: native
+
 Executable flu_cadsd
   Path: src
   MainIs: sim_cadsd.ml

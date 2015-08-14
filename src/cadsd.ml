@@ -423,22 +423,33 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
       z
 
     let csv_init () =
-      let rec f s n s_l =
+      let rec strange n =
         match n > 0 with
-        | true -> 
-            f s (n - 1) ((s ^ string_of_int n) :: s_l)
-        | false -> 
-            s_l
+        | true ->
+          (strange (n - 1)) @ [string_of_int n]
+        | false ->
+          []
+      in
+      let rec f s_l_l s =
+        match s_l_l with
+        | [] ->
+          [s]
+        | [] :: tl ->
+          []
+        | (s_start :: s_l_red) :: tl ->
+          (f tl (s_start ^ s)) @ (f (s_l_red :: tl) s)
       in
       ["t" ; "h"] 
       @ ["inc1" ; "inc2"]
-      @ List.concat
-      (List.map (fun s -> f s a []) ["R0_" ; "R1_" ; "R2_" ; "R12_" ; 
-                                     "I10_" ; "I20_" ; "I12_" ; "I21_" ; 
-                                     "Q0_" ; "Q1_" ; "Q2_" ; "Q12_" ; 
-                                     "dR0_" ; "dR1_" ; "dR2_" ; "dR12_" ; 
-                                     "dI10_" ; "dI20_" ; "dI12_" ; "dI21_" ;
-                                     "dQ0_" ; "dQ1_" ; "dQ2_" ; "dQ12_"])
+      @ (f [strange c ; ["_"] ; strange a ; ["_"] ; 
+           ["R0" ; "R1" ; "R2" ; "R12" ; 
+            "I10" ; "I20" ; "I12" ; "I21" ; 
+            "Q0" ; "Q1" ; "Q2" ; "Q12"] ] "")
+
+      @ (f [strange c ; ["_"] ; strange a ; ["_"] ;
+           ["dR0" ; "dR1" ; "dR2" ; "dR12" ; 
+            "dI10" ; "dI20" ; "dI12" ; "dI21_" ;
+            "dQ0" ; "dQ1" ; "dQ2" ; "dQ12"] ] "")
   end;;
 
 module Default_Algp =

@@ -33,10 +33,8 @@ let load_mat_from_file m_r fname =
 let size_r = ref (100000.)
 let r0_r = ref (2.)
 let e_r = ref (0.15)
-let g1_r = ref (1. /. (10. *. 365.))
-let g2_r = ref (1. /. (10. *. 365.))
+let g_r = ref (1. /. (10. *. 365.))
 let nu_r = ref (1. /. 2.77)
-let q_r = ref (2. /. 365.)
 
 (* Theoretical parameter set *)
 (*
@@ -45,10 +43,8 @@ let r0_r = ref (5.)
 let e_r = ref (0.35)
 let etaN1_r = ref (10. ** (-.7.))
 let etaN2_r = ref (10. ** (-.7.))
-let g1_r = ref (1. /. (20. *. 365.))
-let g2_r = ref (1. /. (20. *. 365.))
+let g_r = ref (1. /. (20. *. 365.))
 let nu_r = ref (1. /. 8.) 
-let q_r = ref (2. /. 365.) 
 *)
 
 (* variational system behaviour *)
@@ -93,9 +89,7 @@ let city_prop_r = ref (Vec.make0 !c_r) ;;
 load_vec_from_file city_prop_r "../../data/city_prop_dummy.csv"
 
 let x0 = Vec.of_array 
-           [| 0.2 ; 0.2 ; 0.2 ; 0.2 ;
-              0.001 ; 0.001 ; 0.001 ; 0.001 ;
-              0.049 ; 0.049 ; 0.049 ; 0.049 |]
+           [| 0.5 ; 0.001 ; 0.499 |]
 
 (* Algorithm parameters *)
 let h0_r = ref (1. /. (24. *. 60.))
@@ -108,16 +102,7 @@ let main () =
   let specx0 = 
         [Arg.Float (fun x -> x0.{1} <- x);
          Arg.Float (fun x -> x0.{2} <- x);
-         Arg.Float (fun x -> x0.{3} <- x);
-         Arg.Float (fun x -> x0.{4} <- x);
-         Arg.Float (fun x -> x0.{5} <- x);
-         Arg.Float (fun x -> x0.{6} <- x);
-         Arg.Float (fun x -> x0.{7} <- x);
-         Arg.Float (fun x -> x0.{8} <- x);
-         Arg.Float (fun x -> x0.{9} <- x);
-         Arg.Float (fun x -> x0.{10} <- x);
-         Arg.Float (fun x -> x0.{11} <- x);
-         Arg.Float (fun x -> x0.{12} <- x)] in
+         Arg.Float (fun x -> x0.{3} <- x)] in
   let specl = 
         [("-dest", Arg.String (change_chan_to_file chan_r),
                 ": location of the destination CSV file.\n" ^ 
@@ -136,17 +121,10 @@ let main () =
                 ": Basic reproductive ratio");
          ("-e", Arg.Set_float e_r, 
                 ": Strength of the seasonal forcing");
-         ("-g1", Arg.Set_float g1_r, 
-                ": Frequency of immunity loss for strain 1 (1/days)");
-         ("-g2", Arg.Set_float g2_r, 
-                ": Frequency of immunity loss for strain 2 (1/days)");
-         (* it doesn't make sense to use both -g and -g1 or -g2 *)
-         ("-g", Arg.Float (fun x -> g1_r := x; g2_r := x),
-                ": Frequency of immunity loss for strains 1 and 2 (per host).");
+         ("-g", Arg.Set_float g_r, 
+                ": Frequency of immunity loss (1/days)");
          ("-nu", Arg.Set_float nu_r, 
                 ": Frequency of recovery from infection (1/days)");
-         ("-q", Arg.Set_float q_r, 
-                ": Frequency of loss of cross immunity (1/days)");
          ("-fmprop", Arg.String (load_vec_from_file age_prop_r),
                 " : File location of the proportions of each age class");
          ("-fsensi", Arg.String (load_vec_from_file sensi_r),
@@ -198,34 +176,34 @@ let main () =
   then 
     (failwith  
      "The user did not pass a proportion tuple (sums to 1) as fcprop : \n") ;
-  if (1. -. 10. ** (~-. !size_r -. 1.)  < Vec.sum ~n:12 x0) 
-  && (Vec.sum ~n:12 x0 < 1. -. 10. ** (~-. !size_r -. 1.))  
+  if (1. -. 10. ** (~-. !size_r -. 1.)  < Vec.sum ~n:3 x0) 
+  && (Vec.sum ~n:3 x0 < 1. -. 10. ** (~-. !size_r -. 1.))  
   then 
     (failwith 
      "The user did not pass a proportion tuple (sums to 1) as x0 : \n") ;
   (* We scale the population size appropriately *)
-  scal ~n:12 ~ofsx:1 !size_r x0 ;
+  scal ~n:3 ~ofsx:1 !size_r x0 ;
   (* We create the perturbation and scale it *)
   let f = fun n -> Random.float 2. -. 1. in
-  let rdu = Array.init (12 * !a_r * !c_r) f in
+  let rdu = Array.init (3 * !a_r * !c_r) f in
   let s = Array.fold_left (+.) 0. rdu in
   let dx0 = Vec.of_array (Array.map (fun x -> (x -. s)) rdu) in
-  scal ~n:(12 * !a_r) ~ofsx:1 !init_perturb_r dx0 ;
-  let y0 = Vec.make0 (12 * 2 * !a_r * !c_r) in
+  scal ~n:(3 * !a_r) ~ofsx:1 !init_perturb_r dx0 ;
+  let y0 = Vec.make0 (3 * 2 * !a_r * !c_r) in
   for i = 1 to !c_r do
     for k = 1 to !a_r do
       (ignore (copy 
-                 ~n:12 
-                 ~ofsy:(1 + 12 * !a_r * (i - 1) + 12 * (k - 1)) 
+                 ~n:3 
+                 ~ofsy:(1 + 3 * !a_r * (i - 1) + 3 * (k - 1)) 
                  ~y:y0 
                  x0) ;
         scal 
-          ~n:12 
-          ~ofsx:(1 + 12 * !a_r * (i - 1) + 12 * (k - 1)) 
+          ~n:3 
+          ~ofsx:(1 + 3 * !a_r * (i - 1) + 3 * (k - 1)) 
           ((!age_prop_r).{k} *. (!city_prop_r).{i}) y0)
     done
   done ;
-  let y0 = copy ~n:(12 * !c_r * !a_r) ~y:y0 ~ofsy:(1 + 12 * !c_r * !a_r) dx0 in
+  let y0 = copy ~n:(3 * !c_r * !a_r) ~y:y0 ~ofsy:(1 + 3 * !c_r * !a_r) dx0 in
   let module Pars = 
     struct
       let a = !a_r
@@ -233,10 +211,8 @@ let main () =
       let size = !size_r
       let r0 = !r0_r
       let e = !e_r
-      let g1 = !g1_r
-      let g2 = !g2_r
+      let g = !g_r
       let nu = !nu_r
-      let q = !q_r
       let sensi_base_v = !sensi_r
       let age_prop_v = !age_prop_r
       let cont_base_m = !cont_r
@@ -246,7 +222,7 @@ let main () =
       let dilat_bound = !dilat_bound_r
     end
   in
-  let module CadsdSys = Cadsd.Sys (Pars) in
+  let module CassdSys = Cassd.Sys (Pars) in
   let module Algp =
     struct
       let h0 = !h0_r
@@ -255,7 +231,7 @@ let main () =
       let max_step = !max_step_r
     end
   in
-  let module Gen = Dopri5.Integrator (CadsdSys) (Algp) in
+  let module Gen = Dopri5.Integrator (CassdSys) (Algp) in
   Gen.simulate !chan_r !tf_r y0
 
 let () = ignore (main ())
