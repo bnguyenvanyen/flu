@@ -16,15 +16,29 @@ let load_vec_from_file v_r fname =
       v_r := v
 
 let load_mat_from_file m_r fname =
+  let f s_l =
+    List.map (fun s -> float_of_string s) s_l
+  in
+  let g s_l =
+    match s_l with
+    | [] -> failwith "empty line"
+    | s :: tl -> List.map (fun s -> float_of_string s) tl
+  in
   let data = Csv.load fname in
   match data with
   | [] -> 
       failwith "no data read from file"
-  | l1 :: [] -> 
+  | (s :: []) :: [] -> 
+    let m = Mat.make 1 1 (float_of_string s) in m_r := m
+  | l1 :: [] ->
       failwith "file has only one line"
-  | l1 :: _ ->
-      let ll = List.map 
-          (fun l -> List.map (fun s -> float_of_string s) l) data in
+  | l1 :: ltl ->
+      let ll =
+        (try List.map f data with
+        | Failure _ -> List.map g ltl)
+        (*let ll = List.map 
+          (fun l -> List.map (fun s -> float_of_string s) l) data in*)
+      in
       let m = Mat.of_array 
           (Array.of_list (List.map (fun l -> Array.of_list l) ll))
       in m_r := m
@@ -111,7 +125,7 @@ let main () =
                 ": Simulate until (in days)");
          ("-y0", Arg.Tuple specx0,
                 ": Initial proportions in each compartment (Should sum to 1)");
-         ("-m", Arg.Set_int a_r,
+         ("-a", Arg.Set_int a_r,
                 ": Number of age classes (default 3)");
          ("-c", Arg.Set_int c_r,
                 ": Number of cities (default 260)");
@@ -125,16 +139,16 @@ let main () =
                 ": Frequency of immunity loss (1/days)");
          ("-nu", Arg.Set_float nu_r, 
                 ": Frequency of recovery from infection (1/days)");
-         ("-fmprop", Arg.String (load_vec_from_file age_prop_r),
-                " : File location of the proportions of each age class");
+         ("-faprop", Arg.String (load_vec_from_file age_prop_r),
+                " : File location of the proportions of age classes");
          ("-fsensi", Arg.String (load_vec_from_file sensi_r),
                 ": File location of the sensibilities for each age class");
          ("-fcont", Arg.String (load_mat_from_file cont_r),
                 ": File location of the contact matrix between age classes");
+         ("-fcprop", Arg.String (load_vec_from_file city_prop_r),
+                " : File location of the proportions of city sizes");
          ("-feta", Arg.String (load_mat_from_file eta_r),
                 ": File location of the airflow traffic matrix");
-         ("-faprop", Arg.String (load_vec_from_file age_prop_r),
-                " : File location of the proportions of city sizes");
          ("-init_perturb", Arg.Set_float init_perturb_r,
                 ": Initial norm (1) of the perturbation");
          ("-dil", Arg.Set_float dilat_bound_r, 
@@ -162,7 +176,7 @@ let main () =
   (*** Sanity check ***)
   (* Dimensions *)
   if not (!a_r = Vec.dim !age_prop_r) then
-    (failwith "Dimensions are not compatible : m and fmprop") ;
+    (failwith "Dimensions are not compatible : a and faprop") ;
   if not (!c_r = Vec.dim !city_prop_r) then
     (failwith "Dimensions are not compatible : c and fcprop") ;
   (* Proportions sum to 1 *)
@@ -170,7 +184,7 @@ let main () =
   && (Vec.sum ~n:(!a_r)  !age_prop_r < 1. -. 10. ** (~-. !size_r -. 1.))  
   then 
     (failwith 
-     "The user did not pass a proportion tuple (sums to 1) as fmprop : \n") ;
+     "The user did not pass a proportion tuple (sums to 1) as faprop : \n") ;
   if (1. -. 10. ** (~-. !size_r -. 1.)  < Vec.sum ~n:(!c_r) !city_prop_r) 
   && (Vec.sum ~n:(!c_r)  !city_prop_r < 1. -. 10. ** (~-. !size_r -. 1.))  
   then 

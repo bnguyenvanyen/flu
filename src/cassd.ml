@@ -45,19 +45,20 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
             && nu >= 0.
             && init_perturb > 0. 
             && dilat_bound > 0.);;
-
+    print_string "sign ok\n";;
     (* check dimensions for age structure *)
     assert (a = Vec.dim age_prop_v
             && a = Mat.dim1 cont_base_m 
             && a = Mat.dim2 cont_base_m
             && a = Vec.dim sensi_base_v);;
-
+    print_string "age structure ok\n";;
     (* check the dimensions for city structure *)
+    print_string "city structure ok\n";;
     assert (c = Mat.dim1 eta_base_m
             && c = Mat.dim2 eta_base_m
             && c = Vec.dim city_prop_v);;
-
     (* there shouldn't be any flow from a city to itself *)
+    print_float (asum (Mat.copy_diag eta_base_m)) ;;
     assert (asum (Mat.copy_diag eta_base_m) = 0.)
 
     let n = 3 * a * c * 2
