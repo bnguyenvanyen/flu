@@ -193,6 +193,7 @@ module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) : INTEGR =
       Csv.output_record chan (csv_info ()) ;
       Csv.output_record chan (Sys.csv_init ()) ;
       let t = ref 0. in
+      let print_t = ref 0. in
       let h = ref Algp.h0 in
       let y4 = copy y0 in
       let y5 = copy y0 in
@@ -201,9 +202,12 @@ module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) : INTEGR =
       let k = Mat.make0 Sys.n 7 in
       while !t < tf do
         let nt, nh, y, z = loop !t !h k y4 y5 y z in
-        t := nt;
-        h := nh;
-        Csv.output_record chan (csv_line nt nh y z)
+        (* We want to print only every max_step *)
+        if nt -. !print_t > Algp.max_step then 
+          (Csv.output_record chan (csv_line nt nh y z) ;
+           print_t := nt) ;
+        t := nt ;
+        h := nh ;
       done;
       (!t, y) 
   end;;

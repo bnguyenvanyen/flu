@@ -102,6 +102,8 @@ load_mat_from_file eta_r "../../data/eta_dummy.csv"
 let city_prop_r = ref (Vec.make0 !c_r) ;;
 load_vec_from_file city_prop_r "../../data/city_prop_dummy.csv"
 
+let scale_eta_r = ref (10. ** (-7.1))
+
 let x0 = Vec.of_array 
            [| 0.5 ; 0.001 ; 0.499 |]
 
@@ -147,6 +149,8 @@ let main () =
                 ": File location of the contact matrix between age classes");
          ("-fcprop", Arg.String (load_vec_from_file city_prop_r),
                 " : File location of the proportions of city sizes");
+         ("-sceta", Arg.Set_float scale_eta_r,
+                ": Scaling factor for eta");
          ("-feta", Arg.String (load_mat_from_file eta_r),
                 ": File location of the airflow traffic matrix");
          ("-init_perturb", Arg.Set_float init_perturb_r,
@@ -195,6 +199,9 @@ let main () =
   then 
     (failwith 
      "The user did not pass a proportion tuple (sums to 1) as x0 : \n") ;
+  (* We scale eta appropriately *)
+  let eta = !eta_r in
+  Mat.scal !scale_eta_r eta ;
   (* We scale the population size appropriately *)
   scal ~n:3 ~ofsx:1 !size_r x0 ;
   (* We create the perturbation and scale it *)
@@ -230,7 +237,7 @@ let main () =
       let sensi_base_v = !sensi_r
       let age_prop_v = !age_prop_r
       let cont_base_m = !cont_r
-      let eta_base_m = !eta_r
+      let eta_base_m = eta
       let city_prop_v = !city_prop_r
       let init_perturb = !init_perturb_r
       let dilat_bound = !dilat_bound_r
