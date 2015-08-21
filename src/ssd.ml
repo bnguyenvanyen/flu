@@ -8,7 +8,9 @@ module type PARS =
     val size : float
     val r0 : float
     val e : float
+    val b : float
     val etaN : float
+    val phi : float
     val g : float
     val nu : float
     val init_perturb : float
@@ -18,7 +20,7 @@ module type PARS =
 module Sys (Pars : PARS) : Dopri5.SYSTEM =
   struct
     open Pars
-    let eta = etaN *. size;;
+    let et0 = etaN *. size;;
     let bet0 = r0 *. nu;;
     let a = Mat.make0 3 3;; (* to simplify computations *)
     a.{1,3} <- g ;;
@@ -40,6 +42,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
 
     let f ?(z=Vec.make0 n) t y =
       let beta = bet0 *. (1. +. e *. cos (2. *. pi *. t /. 365.)) in
+      let eta = et0 *. (1. +. b *. cos (2. *. pi *. (t +. phi ) /. 365.)) in
       let beta_i = beta *. (y.{2} +. eta) /. size in
       let beta_s = beta *. y.{1} /. size in
       a.{1,1} <- ~-. beta_i ;
@@ -60,6 +63,7 @@ module Sys (Pars : PARS) : Dopri5.SYSTEM =
 
     let aux ?(z=Vec.make0 m) t y =
       let beta = bet0 *. (1. +. e *. cos (2. *. pi *. t /. 365.)) in
+      let eta = et0 *. (1. +. b *. cos (2. *. pi *. (t +. phi ) /. 365.)) in
       let infct = beta *. y.{1} *. (y.{2} +. eta) /. size in
       let inc = infct *. 7. *. 100000. /. size in
       (* Weekly incidence for 100 000 *)

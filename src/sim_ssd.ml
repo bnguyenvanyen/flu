@@ -4,7 +4,9 @@ open Lacaml.D
 let size_r = ref (10. ** 5.)
 let r0_r = ref (2.)
 let e_r = ref (0.15)
+let b_r = ref (0.)
 let etaN_r = ref (10. ** (-7.1))
+let phi_r = ref (0.)
 let g_r = ref (1. /. (10. *. 365.))
 let nu_r = ref (1. /. 2.77)
 
@@ -53,8 +55,12 @@ let main () =
                 ": Basic reproductive ratio");
          ("-e", Arg.Set_float e_r, 
                 ": Strength of the seasonal forcing");
+         ("-b", Arg.Set_float b_r,
+                ": Strength of the immigration seasonal forcing");
          ("-etaN", Arg.Set_float etaN_r, 
                 ": Intensity of immigration (per host)");
+         ("-phi", Arg.Set_float phi_r,
+                ": Phase shift between infectivity and immigration");
          ("-g", Arg.Set_float g_r, 
                 ": Frequency of immunity loss (1/days)");
          ("-nu", Arg.Set_float nu_r, 
@@ -95,7 +101,9 @@ let main () =
       let size = !size_r
       let r0 = !r0_r
       let e = !e_r
+      let b = !b_r
       let etaN = !etaN_r
+      let phi = !phi_r
       let g = !g_r
       let nu = !nu_r
       let init_perturb = !init_perturb_r

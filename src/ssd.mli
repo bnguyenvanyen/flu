@@ -9,8 +9,12 @@ module type PARS =
     val r0 : float
     (** Strength of the seasonal forcing *)
     val e : float
-    (** Immigration rate (per host) *)
+    (** Strength of the seasonal immigration forcing *)
+    val b : float
+    (** Base immigration rate (per host) *)
     val etaN : float
+    (** Phase shift between the two forcings *)
+    val phi : float
     (** Immunity loss rate *)
     val g : float
     (** Recovery rate *)
