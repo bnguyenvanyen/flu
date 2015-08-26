@@ -185,7 +185,7 @@ module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) : INTEGR =
       let l = ref [] in
       Vec.iter (fun x -> l := Printf.sprintf "%.3e" x :: !l) z ;
       Vec.iter (fun x -> l := Printf.sprintf "%.3e" x :: !l) y ;
-      [Printf.sprintf "%.3e" t; Printf.sprintf "%.3e" h] @ (List.rev !l)
+      [Printf.sprintf "%f" t; Printf.sprintf "%.2e" h] @ (List.rev !l)
 
     let simulate st_chan tf y0 =
       (* outputs the data as csv to chan *)

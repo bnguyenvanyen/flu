@@ -56,10 +56,12 @@ module Integrator (Sys : SYSTEM) (Algp : ALGPARAMS) :
     type aux = Sys.aux
     type process = {past : (time * aux * state) list ;
                     present : time * aux * state ;
-                    future : (time * aux * state) list}
+                    future : (time * aux * state) list};;
   
     (* Base functions *)
     (* Random generator *)
+    (* Random.init 0 ;; *)
+    Random.self_init ()
     
     let backward p =
       match p.past, p.future with
