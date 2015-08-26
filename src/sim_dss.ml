@@ -54,10 +54,14 @@ let main () =
                 ": Intensity of immigration for strain 1 (per host)");
          ("-etaN2", Arg.Set_float etaN1_r, 
                 ": Intensity of immigration for strain 2 (per host)");
+         ("-etaN", Arg.Float (fun x -> etaN1_r := x; etaN2_r := x),
+                ": Intensity of immigration for strains 1 and 2 (per host).");
          ("-g1", Arg.Set_float g1_r, 
                 ": Frequency of immunity loss for strain 1 (1/days)");
          ("-g2", Arg.Set_float g2_r, 
                 ": Frequency of immunity loss for strain 2 (1/days)");
+         ("-g", Arg.Float (fun x -> g1_r := x; g2_r := x),
+                ": Frequency of immunity loss for strains 1 and 2 (per host).");
          ("-nu", Arg.Set_float nu_r, 
                 ": Frequency of recovery from infection (1/days)");
          ("-q", Arg.Set_float q_r, 
