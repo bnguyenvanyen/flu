@@ -12,60 +12,67 @@ Plugins: META (0.4), DevFiles (0.4)
 
 Library flu
   Path: src
-  Modules: Gill, Dopri5, Euler_multinomial, Sss, Ssd, Assd, Dss, Dsd
-  BuildDepends: csv, lacaml
+  Modules: Sss, Ssd, Rssd, Assd, Dss, Dsd
+  BuildDepends: csv, lacaml, sim
   NativeOpt: -p
 
 Executable flu_ssd
   Path: src
   MainIs: sim_ssd.ml
-  BuildDepends: flu, lacaml
+  BuildDepends: lacaml, sim, flu
   CompiledObject: native
   NativeOpt: -p
 
 Executable flu_sss
   Path: src
   MainIs: sim_sss.ml
-  BuildDepends: flu
+  BuildDepends: sim, flu
   CompiledObject: best
+
+Executable flu_rssd
+  Path: src
+  MainIs: sim_rssd.ml
+  BuildDepends: lacaml, sim, flu
+  CompiledObject: native
+  NativeOpt: -p
 
 Executable flu_assd
   Path: src
   MainIs: sim_assd.ml
-  BuildDepends: flu
+  BuildDepends: lacaml, sim, flu
   CompiledObject: native
   NativeOpt: -p
 
 Executable flu_dsd
   Path: src
   MainIs: sim_dsd.ml
-  BuildDepends: flu, lacaml
+  BuildDepends: lacaml, sim, flu
   CompiledObject: native
   NativeOpt: -p
 
 Executable flu_adsd
   Path: src
   MainIs: sim_adsd.ml
-  BuildDepends: flu, lacaml
+  BuildDepends: lacaml, sim, flu
   CompiledObject: native
   NativeOpt: -p
 
 Executable flu_cassd
   Path: src
   MainIs: sim_cassd.ml
-  BuildDepends: flu, lacaml
+  BuildDepends: lacaml, sim, flu
   CompiledObject: native
 
 Executable flu_cadsd
   Path: src
   MainIs: sim_cadsd.ml
-  BuildDepends: flu, lacaml
+  BuildDepends: lacaml, sim, flu
   CompiledObject: native
 
 Executable flu_dss
   Path: src
   MainIs: sim_dss.ml
-  BuildDepends: flu
+  BuildDepends: sim, flu
   CompiledObject: best
 
 Document API

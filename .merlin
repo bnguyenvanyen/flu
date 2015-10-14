@@ -1,4 +1,5 @@
 PKG lacaml
 PKG csv
+PKG sim
 S src
 B _build/src

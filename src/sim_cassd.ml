@@ -111,8 +111,8 @@ load_vec_from_file city_prop_r "../../data/city_prop.csv"
 
 let scale_eta_r = ref (10. ** (-7.1))
 
-let x0 = Vec.of_array 
-           [| 0.5 ; 0.001 ; 0.499 |]
+let sir_v = Vec.of_array 
+             [| 0.5 ; 0.001 ; 0.499 |]
 
 (* Algorithm parameters *)
 let h0_r = ref (1. /. (24. *. 60.))
@@ -122,17 +122,17 @@ let max_step_r = ref 1.;;
 
 let main () =
   let chan_r = ref stdout in
-  let specx0 = 
-        [Arg.Float (fun x -> x0.{1} <- x);
-         Arg.Float (fun x -> x0.{2} <- x);
-         Arg.Float (fun x -> x0.{3} <- x)] in
+  let spec_sir = 
+        [Arg.Float (fun x -> sir_v.{1} <- x);
+         Arg.Float (fun x -> sir_v.{2} <- x);
+         Arg.Float (fun x -> sir_v.{3} <- x)] in
   let specl = 
         [("-dest", Arg.String (change_chan_to_file chan_r),
                 ": location of the destination CSV file.\n" ^ 
                 "      If not given, outputs to standard output.");
          ("-tf", Arg.Set_float tf_r,
                 ": Simulate until (in days)");
-         ("-y0", Arg.Tuple specx0,
+         ("-spec_sir", Arg.Tuple spec_sir,
                 ": Initial proportions in each compartment (Should sum to 1)");
          ("-a", Arg.Set_int a_r,
                 ": Number of age classes (default 3)");
@@ -201,8 +201,8 @@ let main () =
   then 
     (failwith  
      "The user did not pass a proportion tuple (sums to 1) as fcprop : \n") ;
-  if (1. -. 10. ** (~-. !size_r -. 1.)  < Vec.sum ~n:3 x0) 
-  && (Vec.sum ~n:3 x0 < 1. -. 10. ** (~-. !size_r -. 1.))  
+  if (1. -. 10. ** (~-. !size_r -. 1.)  < Vec.sum ~n:3 sir_v) 
+  && (Vec.sum ~n:3 sir_v < 1. -. 10. ** (~-. !size_r -. 1.))  
   then 
     (failwith 
      "The user did not pass a proportion tuple (sums to 1) as x0 : \n") ;
@@ -210,7 +210,7 @@ let main () =
   let eta = !eta_r in
   Mat.scal !scale_eta_r eta ;
   (* We scale the population size appropriately *)
-  scal ~n:3 ~ofsx:1 !size_r x0 ;
+  scal ~n:3 ~ofsx:1 !size_r sir_v ;
   (* We create the perturbation and scale it *)
   let f = fun n -> Random.float 2. -. 1. in
   let rdu = Array.init (3 * !a_r * !c_r) f in
@@ -224,7 +224,7 @@ let main () =
                  ~n:3 
                  ~ofsy:(1 + 3 * !a_r * (i - 1) + 3 * (k - 1)) 
                  ~y:y0 
-                 x0) ;
+                 sir_v) ;
         scal 
           ~n:3 
           ~ofsx:(1 + 3 * !a_r * (i - 1) + 3 * (k - 1)) 
